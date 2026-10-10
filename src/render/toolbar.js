@@ -15,8 +15,10 @@ function options(projects, current) {
  *  - embedded (bookmarklet overlay inside Jira): no navigation at all; the
  *    overlay script listens for #jd-project / #jd-refresh / #jd-close.
  */
-export function toolbar({ projects, current = '', user = '', withReportActions = false, embedded = false }) {
-  const select = embedded
+export function toolbar({ projects, current = '', user = '', withReportActions = false, embedded = false, hideProjects = false }) {
+  const select = hideProjects
+    ? ''
+    : embedded
     ? `<div class="proj-pick"><select id="jd-project" aria-label="پروژه">${options(projects, current)}</select></div>`
     : `<form class="proj-pick" method="get" action="/">
       <select name="project" aria-label="پروژه" onchange="this.form.submit()">${options(projects, current)}</select>

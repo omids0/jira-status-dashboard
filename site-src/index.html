@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>ردیاب وضعیت پروژه Jira — نصب</title>
 <style>
-  :root{--bg:#f5f7f9;--surface:#fff;--ink:#1a2230;--muted:#5c6779;--line:#dde2e9;--accent:#3956b8;}
-  @media (prefers-color-scheme:dark){:root{--bg:#14161b;--surface:#1c1f26;--ink:#eef1f6;--muted:#a0aabb;--line:#2c313c;--accent:#8fa0f5;}}
+  :root{--bg:#f5f7f9;--surface:#fff;--ink:#1a2230;--muted:#5c6779;--line:#dde2e9;--accent:#3956b8;--accent-ink:#fff;--ok:#0b8f80;}
+  @media (prefers-color-scheme:dark){:root{--bg:#14161b;--surface:#1c1f26;--ink:#eef1f6;--muted:#a0aabb;--line:#2c313c;--accent:#8fa0f5;--accent-ink:#14161b;--ok:#20a896;}}
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--ink);font-family:Vazirmatn,Tahoma,sans-serif;line-height:1.9}
   main{max-width:680px;margin:0 auto;padding:48px 24px 80px}
@@ -16,10 +16,21 @@
   .card h2{font-size:16px;margin:0 0 10px}
   ol{margin:0;padding-inline-start:22px}
   li{margin-bottom:6px}
-  a.bm{display:inline-block;background:var(--accent);color:#fff;text-decoration:none;font-weight:700;padding:12px 22px;border-radius:10px;margin:8px 0;cursor:grab}
+  .drag{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:10px 0}
+  a.bm{display:inline-block;background:var(--accent);color:var(--accent-ink);text-decoration:none;font-weight:700;padding:12px 22px;border-radius:10px;cursor:grab;user-select:none}
+  a.bm:active{cursor:grabbing}
+  .arrow{color:var(--muted);font-size:14px}
   .hint{color:var(--muted);font-size:13px}
+  #click-hint{display:none;color:#c07e1e;font-weight:600;font-size:14px;margin:6px 0}
+  #click-hint.show{display:block}
   code{direction:ltr;unicode-bidi:isolate;background:var(--bg);padding:1px 6px;border-radius:5px;font-size:13px}
+  textarea{width:100%;height:84px;direction:ltr;text-align:left;font-family:ui-monospace,Consolas,monospace;font-size:12px;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:8px;resize:vertical}
+  button.copy{font-family:inherit;font-size:13px;font-weight:600;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:7px 14px;cursor:pointer;margin-top:6px}
+  button.copy:hover{background:var(--bg)}
+  button.copy.done{color:var(--ok);border-color:var(--ok)}
   .warn{border-color:#c07e1e}
+  details summary{cursor:pointer;font-weight:600;font-size:15px}
+  details[open] summary{margin-bottom:10px}
 </style>
 </head>
 <body>
@@ -29,19 +40,48 @@
 
   <div class="card">
     <h2>۱) بوکمارک رو نصب کن (یک‌بار)</h2>
-    <p>این دکمه‌ی آبی رو با ماوس بگیر و بنداز روی <b>نوار بوکمارک</b> مرورگرت.</p>
-    <a id="bm" class="bm" href="#" onclick="return false">ردیاب Jira</a>
-    <p class="hint">نوار بوکمارک پیدا نیست؟ <code>Ctrl+Shift+B</code> رو بزن. کشیدن نشد؟ روی دکمه راست‌کلیک کن و «Add link to bookmarks / افزودن لینک به بوکمارک» رو بزن.</p>
+    <p>این دکمه با کلیک روی همین صفحه کاری نمی‌کنه — برای <b>کشیدن</b>ـه: با ماوس بگیرش و بنداز روی <b>نوار بوکمارک</b> مرورگرت (زیر نوار آدرس).</p>
+    <div class="drag">
+      <a id="bm" class="bm" href="#">ردیاب Jira</a>
+      <span class="arrow">← بگیر و بکش روی نوار بوکمارک</span>
+    </div>
+    <p id="click-hint">اینجا کلیک کردن کاری نمی‌کنه 🙂 دکمه رو نگه دار و بکشش بالا، بنداز رو نوار بوکمارک.</p>
+    <p class="hint">نوار بوکمارک پیدا نیست؟ <code>Ctrl+Shift+B</code> رو بزن. کشیدن جواب نداد؟ پایین «راه دوم» رو ببین.</p>
   </div>
 
   <div class="card">
     <h2>۲) هر بار که خواستی گزارش رو ببینی</h2>
     <ol>
       <li>وارد <b>Jira</b> شرکتت شو (همون‌طور که همیشه می‌شی).</li>
-      <li>رو بوکمارک «ردیاب Jira» کلیک کن.</li>
+      <li>رو بوکمارک «ردیاب Jira» کلیک کن — <b>تو صفحه‌ی Jira</b>، نه اینجا.</li>
       <li>از سلکت‌باکس بالا پروژه رو انتخاب کن. با <code>Esc</code> یا «بستن» برمی‌گردی به Jira.</li>
     </ol>
     <p class="hint">توکن لازم نیست: گزارش تو خود صفحه‌ی Jira اجرا می‌شه و از همون لاگین فعلی‌ت استفاده می‌کنه، پس فقط پروژه‌هایی رو می‌بینی که دسترسی داری. هیچ دیتایی جایی ذخیره یا فرستاده نمی‌شه — همه‌چیز تو مرورگر خودته.</p>
+  </div>
+
+  <div class="card">
+    <h2>راه دوم — کشیدن جواب نداد</h2>
+    <details>
+      <summary>ساخت دستی بوکمارک (کپی و paste)</summary>
+      <ol>
+        <li>این متن رو کپی کن:</li>
+      </ol>
+      <textarea id="code-bookmark" readonly></textarea>
+      <button type="button" class="copy" data-copy="code-bookmark">کپی</button>
+      <ol start="2">
+        <li><code>Ctrl+Shift+O</code> (مدیریت بوکمارک‌ها) ← منوی سه‌نقطه ← <b>Add new bookmark</b>.</li>
+        <li>اسم: «ردیاب Jira». <b>URL</b>: همون متن رو paste کن. ذخیره.</li>
+      </ol>
+    </details>
+    <details style="margin-top:12px">
+      <summary>بدون بوکمارک: paste تو Console</summary>
+      <ol>
+        <li>وارد Jira شو و <code>F12</code> ← تب <b>Console</b> رو باز کن.</li>
+        <li>این کد رو کپی کن، تو Console paste کن و Enter بزن. (کروم بار اول می‌گه <code>allow pasting</code> رو تایپ کن.)</li>
+      </ol>
+      <textarea id="code-console" readonly></textarea>
+      <button type="button" class="copy" data-copy="code-console">کپی</button>
+    </details>
   </div>
 
   <div class="card warn">
@@ -53,7 +93,7 @@
     <h2>کار نکرد؟</h2>
     <ul>
       <li>«تو Jira لاگین نیستی»: اول وارد Jira شو، بعد دوباره بوکمارک.</li>
-      <li>هیچ اتفاقی نیفتاد: Jira ممکنه با سیاست امنیتی (CSP) جلوی اسکریپت خارجی رو گرفته باشه. <code>F12 → Console</code> رو باز کن و خطا رو بفرست.</li>
+      <li>روی بوکمارک زدی و هیچ اتفاقی نیفتاد: مطمئن شو <b>تو صفحه‌ی Jira</b> هستی (نه تو همین صفحه). اگه بازم نشد <code>F12 → Console</code> رو باز کن و خطا رو بفرست؛ ممکنه Jira با سیاست امنیتی (CSP) جلوی اسکریپت خارجی رو گرفته باشه.</li>
       <li>عدد ماژول‌ها یا بک‌اند/فرانت صفره: اسم کامپوننت‌های Jira شما فرق داره؛ تو <code>config/projects.json</code> ریپو تنظیمش کن.</li>
     </ul>
   </div>
@@ -65,7 +105,26 @@
     var src = new URL('dashboard.js', location.href).href;
     var code = "(function(){var s=document.createElement('script');s.src='" + src +
       "?t='+Date.now();s.onerror=function(){alert('بارگذاری ردیاب ناموفق بود (احتمالاً CSP یا اینترنت)')};document.head.appendChild(s)})()";
-    document.getElementById('bm').setAttribute('href', 'javascript:' + encodeURIComponent(code));
+
+    var bm = document.getElementById('bm');
+    bm.setAttribute('href', 'javascript:' + encodeURIComponent(code));
+    bm.addEventListener('click', function (e) {
+      e.preventDefault(); // running it here would do nothing: this is not a Jira page
+      document.getElementById('click-hint').classList.add('show');
+    });
+
+    document.getElementById('code-bookmark').value = 'javascript:' + code;
+    document.getElementById('code-console').value = code;
+
+    Array.prototype.forEach.call(document.querySelectorAll('button.copy'), function (btn) {
+      btn.addEventListener('click', function () {
+        var area = document.getElementById(btn.getAttribute('data-copy'));
+        area.select();
+        var done = function () { btn.classList.add('done'); btn.textContent = 'کپی شد ✓'; };
+        if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(area.value).then(done, function () { document.execCommand('copy'); done(); });
+        else { document.execCommand('copy'); done(); }
+      });
+    });
   })();
 </script>
 </body>

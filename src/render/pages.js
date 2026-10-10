@@ -49,14 +49,14 @@ export function renderLogin({ baseUrl = '', lockedBaseUrl = null, error = '' } =
 }
 
 /** Logged in, no project chosen yet (or the chosen one failed): just the selector. */
-export function renderHome({ projects, user = '', error = '', embedded = false }) {
+export function renderHome({ projects, user = '', error = '', embedded = false, fatal = false }) {
   return shell('ردیاب Jira', `
     <div class="page">
-      ${toolbar({ projects, user, embedded })}
+      ${toolbar({ projects, user, embedded, hideProjects: fatal })}
       <section>
-        <h2>یه پروژه انتخاب کن</h2>
+        <h2>${fatal ? 'اتصال به Jira ممکن نشد' : 'یه پروژه انتخاب کن'}</h2>
         ${errorLine(error)}
-        <p class="section-note">از لیست بالای صفحه پروژه‌ای که می‌خوای ببینی رو انتخاب کن (${projects.length} پروژه در دسترسته).</p>
+        ${fatal ? '' : `<p class="section-note">از لیست بالای صفحه پروژه‌ای که می‌خوای ببینی رو انتخاب کن (${projects.length} پروژه در دسترسته).</p>`}
       </section>
     </div>`);
 }

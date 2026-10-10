@@ -49,8 +49,10 @@ export async function jiraGet(session, path) {
     throw new JiraError(`Cannot reach Jira (${err.cause?.code || err.name}): ${session.baseUrl}`, 0);
   }
   if (!res.ok) {
-    const body = await res.text().catch(() => '');
-    throw new JiraError(`Jira ${res.status} on ${path.split('?')[0]}\n${body.slice(0, 400)}`, res.status);
+    // Only quote JSON error bodies; an HTML error page (e.g. GitHub's 404) is noise.
+    const raw = await res.text().catch(() => '');
+    const body = /^\s*[{[]/.test(raw) ? `\n${raw.slice(0, 400)}` : '';
+    throw new JiraError(`Jira ${res.status} on ${path.split('?')[0]}${body}`, res.status);
   }
   return res.json();
 }

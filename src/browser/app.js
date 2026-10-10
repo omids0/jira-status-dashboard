@@ -38,10 +38,12 @@ export function createBrowserApp({ frame, baseUrl, projectConfig, storage, onClo
   };
 
   const showHome = (error = '') => paint(renderHome({ projects, user, error, embedded: true }));
+  const showFatal = (error) => paint(renderHome({ projects: [], user, error, embedded: true, fatal: true }));
 
   const loading = (text) => paint(`<!doctype html><meta charset="utf-8"><body style="font-family:Tahoma,sans-serif;direction:rtl;text-align:center;padding:80px;color:#667">${text}</body>`);
 
   function describe(err) {
+    if (err instanceof JiraError && err.status === 404) return 'اینجا صفحه‌ی Jira نیست. بوکمارک رو وقتی تو خود Jira هستی بزن (نه تو سایت دیگه‌ای، نه تو صفحه‌ی نصب).';
     if (err instanceof JiraError && err.status === 401) return 'تو Jira لاگین نیستی (یا سشنت تموم شده) — اول وارد Jira شو، بعد دوباره روی بوکمارک بزن.';
     if (err instanceof JiraError && err.status === 403) return 'Jira دسترسی نداد (۴۰۳).';
     return err.message;
@@ -86,7 +88,7 @@ export function createBrowserApp({ frame, baseUrl, projectConfig, storage, onClo
       projects = await listProjects(session);
     } catch (err) {
       console.error('[jira-dashboard]', err);
-      return showHome(describe(err));
+      return showFatal(describe(err));
     }
     const remembered = storage.getItem(lastKey);
     if (remembered && projects.some((p) => p.key === remembered)) return openProject(remembered);
