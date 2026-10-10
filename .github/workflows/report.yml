@@ -19,6 +19,9 @@ concurrency:
 
 jobs:
   build:
+    # Opt-in: does nothing until the PROJECTS variable is set, so forks and
+    # other companies using this repo never get a failing run.
+    if: ${{ vars.PROJECTS != '' }}
     runs-on: ubuntu-latest
     env:
       JIRA_BASE_URL: ${{ vars.JIRA_BASE_URL }}
@@ -74,6 +77,7 @@ jobs:
 
   deploy:
     needs: build
+    if: ${{ vars.PROJECTS != '' }}
     runs-on: ubuntu-latest
     permissions:
       pages: write
