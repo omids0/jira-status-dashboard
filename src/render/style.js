@@ -126,4 +126,8 @@ button:hover{filter:brightness(1.08);}
 .proj-pick{margin:0;}
 .proj-pick select{font-family:inherit;font-size:13px;padding:7px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);max-width:320px;cursor:pointer;}
 .proj-pick select:focus{outline:2px solid var(--accent);outline-offset:1px;}
+.help{margin-top:8px;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:var(--surface);font-size:12.5px;color:var(--ink-muted);line-height:1.8;}
+.help b{color:var(--ink);}
+.help ol{margin:6px 0 8px;padding-inline-start:20px;}
+.help a{color:var(--accent);}
 `;

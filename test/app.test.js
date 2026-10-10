@@ -48,6 +48,9 @@ test('unauthenticated visitors are sent to /login', async () => {
   const page = await (await fetch(`${base}/login`)).text();
   assert.match(page, /Personal Access Token/);
   assert.ok(!page.includes('name="project"'), 'project is chosen after login, not on the login form');
+  assert.match(page, /توکن رو از کجا بیارم/);
+  assert.match(page, /Personal Access Tokens/);
+  assert.ok(page.includes('/plugins/servlet/personal-access-tokens'));
 });
 
 test('bad token is rejected on the login page, no session cookie', async () => {
