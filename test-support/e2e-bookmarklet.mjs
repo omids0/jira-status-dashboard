@@ -68,6 +68,55 @@ try {
   check('no server-only controls (logout / refresh link)', (await frame.locator('form[action="/logout"], a[href*="refresh"]').count()) === 0);
   await page.screenshot({ path: path.join(shots, '2-dma-report.png'), fullPage: false });
 
+  // --- the generation date reads day, month, year from the right (RTL), not "month year ... day"
+  const order = await frame.locator('.subtitle bdi').evaluate((el) => {
+    const node = el.firstChild;
+    const words = node.textContent.split(' ');
+    let offset = 0;
+    return words.map((w) => {
+      const r = document.createRange();
+      r.setStart(node, offset);
+      r.setEnd(node, offset + w.length);
+      offset += w.length + 1;
+      return { w, x: r.getBoundingClientRect().x };
+    });
+  });
+  const xs = order.map((o) => o.x);
+  check('date words run right-to-left in logical order (day first, on the right)', xs.every((x, i) => i === 0 || x < xs[i - 1]), order.map((o) => `${o.w}@${Math.round(o.x)}`).join('  '));
+
+  // --- theme toggle: follows the OS by default, button flips it, choice persists
+  const bg = () => frame.locator('body').evaluate((b) => getComputedStyle(b).backgroundColor);
+  await page.emulateMedia({ colorScheme: 'light' });
+  const light = await bg();
+  await frame.locator('.theme-btn').click();
+  const dark = await bg();
+  check('toggle switches light -> dark', light !== dark && dark === 'rgb(20, 22, 27)', `${light} -> ${dark}`);
+  await page.screenshot({ path: path.join(shots, '2b-dark.png') });
+  check('choice stored in localStorage', (await page.evaluate(() => localStorage.getItem('jira-dashboard:theme'))) === 'dark');
+  await frame.locator('#jd-close').click();
+  await page.addScriptTag({ url: `${jira.url}/dashboard.js` });
+  const reopened = page.frameLocator('#jira-dashboard-overlay iframe');
+  await reopened.locator('select#jd-project').waitFor({ timeout: 10000 });
+  check('dark theme is remembered when the dashboard is reopened', (await reopened.locator('body').evaluate((b) => getComputedStyle(b).backgroundColor)) === 'rgb(20, 22, 27)');
+  await reopened.locator('.theme-btn').click();
+  check('toggle switches back to light', (await reopened.locator('body').evaluate((b) => getComputedStyle(b).backgroundColor)) === light);
+  await reopened.locator('select#jd-project').selectOption('DMA');
+  await reopened.locator('h1', { hasText: 'ردیاب پروژه DMA' }).waitFor({ timeout: 10000 });
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await page.evaluate(() => localStorage.removeItem('jira-dashboard:theme'));
+  await page.keyboard.press('Escape');
+  await page.addScriptTag({ url: `${jira.url}/dashboard.js` });
+  const auto = page.frameLocator('#jira-dashboard-overlay iframe');
+  await auto.locator('select#jd-project').waitFor({ timeout: 10000 });
+  check('with no saved choice the OS dark preference applies', (await auto.locator('body').evaluate((b) => getComputedStyle(b).backgroundColor)) === 'rgb(20, 22, 27)');
+  await page.emulateMedia({ colorScheme: 'light' });
+  await page.keyboard.press('Escape');
+  await page.addScriptTag({ url: `${jira.url}/dashboard.js` });
+  await page.frameLocator('#jira-dashboard-overlay iframe').locator('select#jd-project').waitFor({ timeout: 10000 });
+  await page.frameLocator('#jira-dashboard-overlay iframe').locator('select#jd-project').selectOption('DMA');
+  await page.frameLocator('#jira-dashboard-overlay iframe').locator('h1', { hasText: 'ردیاب پروژه DMA' }).waitFor({ timeout: 10000 });
+  await page.screenshot({ path: path.join(shots, '2c-light-again.png') });
+
   await frame.locator('select#jd-project').selectOption('ABC');
   await frame.locator('h1', { hasText: 'ردیاب پروژه ABC' }).waitFor({ timeout: 10000 });
   check('switching to ABC works (epic grouping)', (await frame.locator('body').innerText()).includes('Onboarding epic'));

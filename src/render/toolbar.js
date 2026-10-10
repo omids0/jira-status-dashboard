@@ -36,6 +36,7 @@ export function toolbar({ projects, current = '', user = '', withReportActions =
   return `<div class="toolbar">
       ${select}
       <span class="who">${user ? esc(user) : ''}</span>
+      <button type="button" class="tb-link theme-btn" onclick="__jdToggleTheme()" title="تغییر بین حالت روشن و تاریک" aria-label="تغییر بین حالت روشن و تاریک">◐ شب / روز</button>
       ${actions}
       ${leave}
     </div>`;

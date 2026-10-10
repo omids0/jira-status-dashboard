@@ -65,7 +65,7 @@ export function inProgressGroups(rows, modules, jiraUrl) {
     return `<details class="mod-acc">
       <summary>
         <span class="mod-acc-name">${esc(g.label)}</span>
-        <span class="mod-acc-count num">${g.items.length} استوری</span>
+        <span class="mod-acc-count"><bdi class="num">${g.items.length}</bdi> استوری</span>
         <span class="mod-acc-chips">${chips}</span>
       </summary>
       <div class="mod-acc-body table-wrap">

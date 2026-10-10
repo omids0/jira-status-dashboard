@@ -107,7 +107,7 @@ function roleActions(insights, report) {
 }
 
 function statTile(label, color, value, sub) {
-  return `<div class="stat"><div class="stat-top"><span class="stat-label">${label}</span><span class="dot" style="background:var(${color})"></span></div><div class="stat-value num" style="color:var(${color})">${Math.round(value)}%</div><div class="stat-sub num">${sub}</div></div>`;
+  return `<div class="stat"><div class="stat-top"><span class="stat-label">${label}</span><span class="dot" style="background:var(${color})"></span></div><div class="stat-value num" style="color:var(${color})">${Math.round(value)}%</div><div class="stat-sub">${sub}</div></div>`;
 }
 
 export function renderReport(report, { previous = null, insights = null, dailySubtasks = null, dailyStories = null, sprints = null, people = null, user = '', projects = [], embedded = false } = {}) {
@@ -124,7 +124,7 @@ export function renderReport(report, { previous = null, insights = null, dailySu
       <header>
         <span class="eyebrow">${key} · LIVE</span>
         <h1>ردیاب پروژه ${key}</h1>
-        <p class="subtitle">داده‌ی زنده از Jira · زمان تولید: <span class="num">${esc(generated)}</span></p>
+        <p class="subtitle">داده‌ی زنده از Jira · زمان تولید: <bdi dir="rtl">${esc(generated)}</bdi></p>
       </header>
 
       <div class="stats">

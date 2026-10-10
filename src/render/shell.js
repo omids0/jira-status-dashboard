@@ -12,6 +12,19 @@ export function shell(title, body) {
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap">
 <style>${STYLE}</style>
+<script>
+(function () {
+  var KEY = 'jira-dashboard:theme';
+  try { var saved = localStorage.getItem(KEY); if (saved === 'light' || saved === 'dark') document.documentElement.setAttribute('data-theme', saved); } catch (e) {}
+  window.__jdToggleTheme = function () {
+    var root = document.documentElement;
+    var current = root.getAttribute('data-theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    var next = current === 'dark' ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    try { localStorage.setItem(KEY, next); } catch (e) {}
+  };
+})();
+</script>
 </head>
 <body>${body}</body>
 </html>`;
