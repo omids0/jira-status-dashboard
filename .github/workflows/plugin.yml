@@ -1,0 +1,118 @@
+name: Jira plugin
+
+# Builds the Jira Data Center plugin (.jar), installs it on a throwaway Jira
+# 9.15.2 started with Atlassian's own dev tooling (test license, admin/admin),
+# seeds a demo project and clicks through it in real Chrome. A tag v* also
+# publishes the jar as a GitHub Release asset.
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  JIRA_URL: http://localhost:2990/jira
+  JIRA_VERSION: 9.15.2
+  AMPS_VERSION: 9.13.2
+  PLUGIN_KEY: io.github.omids0.jira-status-dashboard
+
+jobs:
+  plugin:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - run: npm ci
+      - run: npm test
+      - run: npm run build:plugin
+      - uses: actions/upload-artifact@v4
+        with:
+          name: jira-status-dashboard-plugin
+          path: dist/*.jar
+
+      - name: Cache Maven repository (Jira itself is ~1 GB)
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: m2-jira-${{ env.JIRA_VERSION }}-amps-${{ env.AMPS_VERSION }}
+
+      - name: Start Jira ${{ env.JIRA_VERSION }}
+        run: |
+          # stdin must stay open: the SDK shuts Jira down on EOF (Ctrl-D)
+          nohup sh -c "tail -f /dev/null | mvn -B -s ci/maven-settings.xml \
+            com.atlassian.maven.plugins:jira-maven-plugin:${AMPS_VERSION}:run-standalone \
+            -Dproduct=jira -Dproduct.version=${JIRA_VERSION} \
+            -Dhttp.port=2990 -Dcontext.path=/jira -DskipAllPrompts=true" > jira.log 2>&1 &
+
+      - name: Wait for Jira to be RUNNING
+        run: |
+          for i in $(seq 1 120); do
+            if curl -s "$JIRA_URL/status" | grep -q RUNNING; then echo "Jira up after ~$((i*15))s"; exit 0; fi
+            sleep 15
+          done
+          tail -n 150 jira.log
+          exit 1
+
+      - name: Install the plugin through UPM
+        run: |
+          TOKEN=$(curl -s -u admin:admin -I "$JIRA_URL/rest/plugins/1.0/?os_authType=basic" | tr -d '\r' | awk -F': ' 'tolower($1)=="upm-token"{print $2}')
+          echo "upm token: ${TOKEN:+received}"
+          curl -sS -u admin:admin -H 'X-Atlassian-Token: no-check' -F "plugin=@$(ls dist/*.jar)" "$JIRA_URL/rest/plugins/1.0/?token=$TOKEN"
+          echo
+          for i in $(seq 1 36); do
+            STATE=$(curl -s -u admin:admin "$JIRA_URL/rest/plugins/1.0/${PLUGIN_KEY}-key")
+            if echo "$STATE" | grep -q '"enabled":true'; then echo "plugin enabled"; exit 0; fi
+            sleep 5
+          done
+          echo "$STATE"
+          exit 1
+
+      - name: Seed a demo project
+        run: node ci/seed-jira.mjs
+
+      - name: Click through the plugin in Chrome
+        run: node ci/e2e-real-jira.mjs
+
+      - name: Report
+        if: always()
+        run: |
+          {
+            echo "## Plugin e2e on Jira ${JIRA_VERSION}"
+            if [ -f ci-shots/results.json ]; then
+              node -e 'for (const r of require("./ci-shots/results.json")) console.log(`- ${r.ok ? "✅" : "❌"} ${r.name}${r.extra ? " — " + r.extra : ""}`)'
+            else
+              echo "e2e did not run"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+          # Annotations are readable without logging in, which makes failures debuggable from outside.
+          if [ -f ci-shots/results.json ]; then
+            node -e 'const r=require("./ci-shots/results.json"); console.log("::notice title=e2e results::" + r.map(x=>(x.ok?"PASS ":"FAIL ")+x.name+(x.extra?" — "+x.extra:"")).join("%0A"))'
+          fi
+          if [ -f jira.log ]; then
+            echo "::notice title=jira.log tail::$(grep -E 'ERROR|FATAL|BUILD|Exception|started|RUNNING' jira.log | tail -n 25 | cut -c1-300 | sed ':a;N;$!ba;s/\n/%0A/g')"
+          fi
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: jira-e2e-screenshots-and-log
+          path: |
+            ci-shots/
+            jira.log
+
+      - name: Publish release asset
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.jar

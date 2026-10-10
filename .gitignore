@@ -7,3 +7,5 @@ dist-encrypted/
 .data/
 site/
 e2e-shots/
+ci-shots/
+jira.log

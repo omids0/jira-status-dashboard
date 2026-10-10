@@ -12,8 +12,9 @@
     "dev": "node --watch server.js",
     "build:static": "node scripts/build-static.js",
     "build:site": "node scripts/build-site.js",
+    "build:plugin": "node scripts/build-plugin.js",
     "test": "node --test",
-    "e2e": "npm run build:site && node test-support/e2e-bookmarklet.mjs && node test-support/e2e-install-page.mjs"
+    "e2e": "npm run build:site && node test-support/e2e-bookmarklet.mjs && node test-support/e2e-install-page.mjs && node test-support/e2e-plugin-local.mjs"
   },
   "license": "UNLICENSED",
   "private": true,
