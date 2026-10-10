@@ -1,0 +1,20 @@
+{
+  "name": "jira-status-dashboard",
+  "version": "1.0.0",
+  "description": "Live status dashboard for any Jira Data Center project — log in with a Personal Access Token, pick a project, see true completion, sprints and daily trends",
+  "type": "module",
+  "main": "server.js",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "test": "node --test"
+  },
+  "license": "UNLICENSED",
+  "private": true,
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}

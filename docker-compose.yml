@@ -1,0 +1,15 @@
+services:
+  jira-dashboard:
+    build: .
+    ports:
+      - "${PORT:-4173}:4173"
+    environment:
+      # JIRA_BASE_URL: https://jira.example.com
+      # TRUST_PROXY: "true"
+      DEFAULT_PROJECT: ${DEFAULT_PROJECT:-}
+    volumes:
+      - dashboard-data:/data
+      - ./config:/app/config:ro
+    restart: unless-stopped
+volumes:
+  dashboard-data:

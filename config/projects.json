@@ -1,0 +1,21 @@
+{
+  "defaults": {
+    "components": { "backend": "Back-End", "frontend": "Front-End" },
+    "moduleBy": "auto"
+  },
+  "projects": {
+    "DMA": {
+      "storyJql": "summary ~ \"US-\"",
+      "moduleLabels": {
+        "CAT": "دسته‌بندی",
+        "BRD": "برند",
+        "PAT": "ویژگی محصول",
+        "SPG": "گروه مشخصات",
+        "SPA": "ویژگی مشخصات",
+        "FIL": "مدیریت فایل",
+        "PROD": "مدیریت کالا",
+        "DSC": "تخفیف"
+      }
+    }
+  }
+}
