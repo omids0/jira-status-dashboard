@@ -29,7 +29,7 @@ jobs:
         with:
           node-version: 20
           cache: npm
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: 17
@@ -50,10 +50,7 @@ jobs:
       - name: Start Jira ${{ env.JIRA_VERSION }}
         run: |
           # stdin must stay open: the SDK shuts Jira down on EOF (Ctrl-D)
-          nohup sh -c "tail -f /dev/null | mvn -B -s ci/maven-settings.xml \
-            com.atlassian.maven.plugins:jira-maven-plugin:${AMPS_VERSION}:run-standalone \
-            -Dproduct=jira -Dproduct.version=${JIRA_VERSION} \
-            -Dhttp.port=2990 -Dcontext.path=/jira -DskipAllPrompts=true" > jira.log 2>&1 &
+          nohup sh -c "tail -f /dev/null | mvn -B -s ci/maven-settings.xml -f ci/jira-runner/pom.xml             com.atlassian.maven.plugins:jira-maven-plugin:${AMPS_VERSION}:run             -Damps.version=${AMPS_VERSION} -Djira.version=${JIRA_VERSION}" > jira.log 2>&1 &
 
       - name: Wait for Jira to be RUNNING
         run: |

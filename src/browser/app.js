@@ -43,9 +43,9 @@ export function createBrowserApp({ frame, baseUrl, projectConfig, storage, onClo
   const loading = (text) => paint(`<!doctype html><meta charset="utf-8"><body style="font-family:Tahoma,sans-serif;direction:rtl;text-align:center;padding:80px;color:#667">${text}</body>`);
 
   function describe(err) {
-    if (err instanceof JiraError && err.status === 404) return 'اینجا صفحه‌ی Jira نیست. بوکمارک رو وقتی تو خود Jira هستی بزن (نه تو سایت دیگه‌ای، نه تو صفحه‌ی نصب).';
-    if (err instanceof JiraError && err.status === 401) return 'تو Jira لاگین نیستی (یا سشنت تموم شده) — اول وارد Jira شو، بعد دوباره روی بوکمارک بزن.';
-    if (err instanceof JiraError && err.status === 403) return 'Jira دسترسی نداد (۴۰۳).';
+    if (err instanceof JiraError && err.status === 404) return 'این صفحه متعلق به Jira نیست. بوکمارک را هنگامی اجرا کنید که در خود Jira هستید (نه در سایت دیگر یا صفحه‌ی نصب).';
+    if (err instanceof JiraError && err.status === 401) return 'وارد Jira نشده‌اید یا نشست شما منقضی شده است. ابتدا وارد Jira شوید و سپس دوباره بوکمارک را اجرا کنید.';
+    if (err instanceof JiraError && err.status === 403) return 'Jira اجازه‌ی دسترسی نداد (۴۰۳).';
     return err.message;
   }
 
@@ -60,7 +60,7 @@ export function createBrowserApp({ frame, baseUrl, projectConfig, storage, onClo
       let data;
       if (!refresh && cached && Date.now() - cached.at < CACHE_MS) data = cached.data;
       else {
-        loading(`در حال خوندن ${key} از Jira…`);
+        loading(`در حال دریافت اطلاعات پروژه‌ی ${key} از Jira…`);
         data = await collectReportData(session, key, projectConfig(key), history);
         session.cache[key] = { at: Date.now(), data };
       }
@@ -74,7 +74,7 @@ export function createBrowserApp({ frame, baseUrl, projectConfig, storage, onClo
       console.error('[jira-dashboard]', err);
       if (err instanceof JiraError && (err.status === 400 || err.status === 404)) {
         current = null;
-        return showHome(`خواندن پروژه ${key} ممکن نشد — پروژه وجود نداره یا دسترسی نداری`);
+        return showHome(`خواندن پروژه ${key} ممکن نشد؛ پروژه وجود ندارد یا به آن دسترسی ندارید.`);
       }
       showHome(describe(err));
     }

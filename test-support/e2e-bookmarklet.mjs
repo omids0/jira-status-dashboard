@@ -42,7 +42,7 @@ try {
   await page.goto(`${jira.url}/secure/Dashboard.jspa`);
   await page.addScriptTag({ url: `${jira.url}/dashboard.js` });
   let frame = page.frameLocator('#jira-dashboard-overlay iframe');
-  await frame.locator('body').getByText('لاگین نیستی').waitFor({ timeout: 10000 });
+  await frame.locator('body').getByText('وارد Jira نشده‌اید').waitFor({ timeout: 10000 });
   check('logged-out user gets the "log in to Jira first" message', true);
   await page.keyboard.press('Escape');
   check('Escape closes the overlay', (await page.locator('#jira-dashboard-overlay').count()) === 0);
@@ -61,9 +61,9 @@ try {
   await frame.locator('h1', { hasText: 'ردیاب پروژه DMA' }).waitFor({ timeout: 10000 });
   const text = await frame.locator('body').innerText();
   check('DMA report renders', text.includes('ردیاب پروژه DMA'));
-  check('"ready for frontend" badge present', text.includes('آماده برای فرانت'));
+  check('"ready for frontend" badge present', text.includes('آماده‌ی شروع فرانت‌اند'));
   check('sprints section present', text.includes('Sprint One') && text.includes('Sprint Two'));
-  check('parallel list scoped to a sprint', text.includes('اسپرینت بعدی (اسپرینت فعالی نیست)'));
+  check('parallel list scoped to a sprint', text.includes('اسپرینت فعالی وجود ندارد؛ مبنا اسپرینت بعدی است'));
   check('select reflects DMA', (await frame.locator('select#jd-project').inputValue()) === 'DMA');
   check('no server-only controls (logout / refresh link)', (await frame.locator('form[action="/logout"], a[href*="refresh"]').count()) === 0);
   await page.screenshot({ path: path.join(shots, '2-dma-report.png'), fullPage: false });

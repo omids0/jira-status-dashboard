@@ -2,10 +2,10 @@ import { byKey, esc } from './util.js';
 
 // kind -> badge class + full label (row badge) + short label (group header chip)
 export const VERDICTS = {
-  stale: { cls: 'go', label: 'کامل — فقط status جیرا نخورده', short: 'کامل، status نخورده' },
+  stale: { cls: 'go', label: 'تکمیل‌شده؛ وضعیت Jira به‌روز نشده', short: 'تکمیل‌شده (وضعیت به‌روز نشده)' },
   nosub: { cls: 'blocked', label: 'بدون ساب‌تسک', short: 'بدون ساب‌تسک' },
-  fe: { cls: 'fe', label: 'فرانت در حال انجام', short: 'فرانت در حال انجام' },
-  ready: { cls: 'go', label: 'آماده برای فرانت', short: 'آماده برای فرانت' },
+  fe: { cls: 'fe', label: 'فرانت‌اند در حال انجام', short: 'فرانت‌اند در حال انجام' },
+  ready: { cls: 'go', label: 'آماده‌ی شروع فرانت‌اند', short: 'آماده‌ی شروع فرانت‌اند' },
   be: { cls: 'wait', label: 'بک‌اند در حال انجام', short: 'بک‌اند در حال انجام' },
   other: { cls: 'wait', label: 'ساب‌تسک‌ها در حال انجام', short: 'در حال انجام' }
 };
@@ -38,7 +38,7 @@ function inProgressRow(r, jiraUrl) {
     <td class="num">${info.beDone}/${info.beTotal}</td>
     <td class="num">${info.feDone}/${info.feTotal}</td>
     <td>${verdictFor(info)}</td>
-    <td><a href="${esc(`${jiraUrl}/browse/${r.key}`)}" target="_blank" rel="noopener">باز کن</a></td>
+    <td><a href="${esc(`${jiraUrl}/browse/${r.key}`)}" target="_blank" rel="noopener">مشاهده</a></td>
   </tr>`;
 }
 

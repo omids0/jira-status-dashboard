@@ -45,7 +45,7 @@ try {
   // running the bookmark on a NON-Jira page (the mistake the first user made) explains itself
   await page.evaluate(code);
   const wrong = page.frameLocator('#jira-dashboard-overlay iframe').locator('body');
-  await wrong.getByText('اینجا صفحه‌ی Jira نیست').waitFor({ timeout: 10000 });
+  await wrong.getByText('این صفحه متعلق به Jira نیست').waitFor({ timeout: 10000 });
   const wrongText = await wrong.innerText();
   check('bookmark on a non-Jira page says "this is not Jira"', true);
   check('no raw HTML error page leaks into the message', !/DOCTYPE|<html|GitHub Pages/i.test(wrongText));

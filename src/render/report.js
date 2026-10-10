@@ -5,6 +5,8 @@ import { sprintSection } from './sprints.js';
 import { inProgressGroups } from './verdicts.js';
 import { deltaSpan, esc, pct } from './util.js';
 
+const LIST_LIMIT = 15;
+
 function moduleRow(m) {
   const d = pct(m.done, m.total), w = pct(m.inProgress, m.total), b = pct(m.backlog, m.total);
   return `
@@ -28,35 +30,79 @@ const keyList = (rows) => rows.map((r) => `<span class="num">${esc(r.key)}</span
 
 function summaryBullets(insights) {
   const out = [];
-  if (insights.readyForFrontend.length) out.push(`<li><b>${insights.readyForFrontend.length} استوری</b> بک‌اندشون کامله، آماده‌ی فرانتن: ${keyList(insights.readyForFrontend)}</li>`);
-  if (insights.noSubtaskYet.length) out.push(`<li><b>${insights.noSubtaskYet.length} استوری</b> status‌شون In Progress‌ه ولی هیچ ساب‌تسکی ندارن — یا کار شروع نشده یا status اشتباه خورده: ${keyList(insights.noSubtaskYet)}</li>`);
-  if (insights.staleDone.length) out.push(`<li><b>${insights.staleDone.length} استوری</b> واقعاً کامل بودن ولی status جیراشون هنوز نخورده (stale): ${keyList(insights.staleDone)}</li>`);
-  if (insights.zeroProgressModules.length) out.push(`<li>ماژول‌های هنوز صفردرصد: <b>${insights.zeroProgressModules.map((m) => esc(m.label)).join('، ')}</b></li>`);
-  if (insights.leadModule) out.push(`<li>جلوترین ماژول: <b>${esc(insights.leadModule.label)}</b> (${Math.round(pct(insights.leadModule.done, insights.leadModule.total))}%)</li>`);
+  if (insights.readyForFrontend.length) out.push(`<li><b>${insights.readyForFrontend.length} استوری</b> بک‌اند تکمیل‌شده دارند و آماده‌ی شروع فرانت‌اند هستند: ${keyList(insights.readyForFrontend)}</li>`);
+  if (insights.noSubtaskYet.length) out.push(`<li><b>${insights.noSubtaskYet.length} استوری</b> در وضعیت In Progress هستند اما ساب‌تسکی برای آن‌ها تعریف نشده است: ${keyList(insights.noSubtaskYet)}</li>`);
+  if (insights.staleDone.length) out.push(`<li><b>${insights.staleDone.length} استوری</b> در عمل تکمیل شده‌اند اما وضعیت آن‌ها در Jira به‌روز نشده است: ${keyList(insights.staleDone)}</li>`);
+  if (insights.zeroProgressModules.length) out.push(`<li>ماژول‌های بدون پیشرفت: <b>${insights.zeroProgressModules.map((m) => esc(m.label)).join('، ')}</b></li>`);
+  if (insights.leadModule) out.push(`<li>بیشترین پیشرفت: ماژول <b>${esc(insights.leadModule.label)}</b> (${Math.round(pct(insights.leadModule.done, insights.leadModule.total))}%)</li>`);
   return out;
 }
 
-function parallelPlanHtml(insights, report) {
-  const plan = insights?.parallelPlan;
-  const now = plan?.now || [];
+/** Compact story list with a cap, so a 60-story backlog doesn't swamp the page. */
+function storyList(rows, baseUrl) {
+  const shown = rows.slice(0, LIST_LIMIT).map((r) =>
+    `<li><a class="num" href="${esc(`${baseUrl}/browse/${r.key}`)}" target="_blank" rel="noopener">${esc(r.key)}</a> — <bdi>${esc(r.summary)}</bdi></li>`
+  ).join('');
+  const more = rows.length > LIST_LIMIT ? `<li class="more">و ${rows.length - LIST_LIMIT} مورد دیگر</li>` : '';
+  return `<ul class="task-list">${shown}${more}</ul>`;
+}
+
+function block(title, rows, baseUrl) {
+  if (!rows.length) return '';
+  return `<p class="role-item">${title} <span class="num">(${rows.length})</span></p>${storyList(rows, baseUrl)}`;
+}
+
+function roleActions(insights, report) {
+  const a = insights?.actions;
+  if (!a) return '<p class="section-note">داده‌ای برای پیشنهاد اقدامات در دسترس نیست.</p>';
+  const base = report.baseUrl;
   const labelOf = (id) => report.modules.find((m) => m.id === id)?.label || id;
-  const blocked = plan?.blockedModules?.length
-    ? `<p class="section-note">ماژول‌های کنار گذاشته‌شده چون یه استوریشون فرانتش در حال انجامه، فایل مشترک می‌خورن: ${plan.blockedModules.map((id) => esc(labelOf(id))).join('، ')}</p>`
-    : '';
-  const sprint = plan?.sprint;
-  const scope = sprint
-    ? `<p class="section-note">فقط استوری‌های ${sprint.state === 'active' ? 'اسپرینت فعال' : 'اسپرینت بعدی (اسپرینت فعالی نیست)'}: <b>${esc(sprint.name)}</b></p>`
-    : '<p class="section-note">اسپرینتی پیدا نشد (یا خونده نشد) — همه‌ی استوری‌های پروژه در نظر گرفته شدن.</p>';
-  const outside = plan?.outsideSprint?.length
-    ? `<p class="section-note">${plan.outsideSprint.length} استوری آماده‌ی فرانت دیگه هست که تو این اسپرینت نیست: ${plan.outsideSprint.map((r) => `<span class="num">${esc(r.key)}</span>`).join('، ')}</p>`
-    : '';
-  if (now.length === 0) return `${scope}<p class="section-note">الان هیچی برای صدا زدن موازی نیست.</p>${blocked}${outside}`;
-  const rows = now.map((r) => `<tr>
-        <td class="num">${esc(r.key)}</td>
-        <td style="text-align:right;white-space:normal;">${esc(r.summary)}</td>
-        <td><a href="${esc(`${report.baseUrl}/browse/${r.key}`)}" target="_blank" rel="noopener">باز کن</a></td>
-      </tr>`).join('');
-  return `${scope}<div class="table-wrap"><table><thead><tr><th>استوری</th><th>عنوان</th><th>لینک</th></tr></thead><tbody>${rows}</tbody></table></div>${blocked}${outside}`;
+  const sprint = insights.parallelPlan?.sprint;
+
+  const scope = !sprint
+    ? 'اطلاعات اسپرینت در دسترس نیست؛ همه‌ی استوری‌های پروژه در نظر گرفته شده‌اند.'
+    : sprint.state === 'active'
+      ? `مبنا: اسپرینت فعال <b>${esc(sprint.name)}</b>`
+      : `اسپرینت فعالی وجود ندارد؛ مبنا اسپرینت بعدی است: <b>${esc(sprint.name)}</b>`;
+
+  const fe = a.frontend;
+  const frontend = [
+    fe.readyNow.length
+      ? block('قابل شروع به‌صورت هم‌زمان — بک‌اند تکمیل شده و از هر ماژول یک مورد انتخاب شده تا در فایل‌های مشترک تداخل ایجاد نشود', fe.readyNow, base)
+      : '<p class="role-empty">در حال حاضر استوری آماده‌ای برای شروع فرانت‌اند وجود ندارد.</p>',
+    block('پس از ادغام موارد بالا قابل شروع است (هم‌ماژول با موارد بالا)', fe.afterThose, base),
+    block('در حال انجام', fe.inProgress, base),
+    fe.blockedModules.length
+      ? `<p class="role-note">تا پایان کار فرانت‌اند جاری، استوری جدیدی در این ماژول‌ها شروع نشود (فایل‌های مشترک): ${fe.blockedModules.map((id) => esc(labelOf(id))).join('، ')}</p>`
+      : '',
+    fe.readyOutsideSprint.length
+      ? `<p class="role-note">${fe.readyOutsideSprint.length} استوری آماده‌ی فرانت‌اند نیز خارج از این اسپرینت وجود دارد: ${keyList(fe.readyOutsideSprint)}</p>`
+      : ''
+  ].join('');
+
+  const be = a.backend;
+  const backend = (be.inProgress.length || be.notStarted.length)
+    ? [
+      block('در حال انجام — اولویت با تکمیل این موارد است، زیرا فرانت‌اند به آن‌ها وابسته است', be.inProgress, base),
+      block('برنامه‌ریزی‌شده در اسپرینت و هنوز شروع‌نشده', be.notStarted, base)
+    ].join('')
+    : '<p class="role-empty">کار باقی‌مانده‌ای برای بک‌اند در این محدوده وجود ندارد.</p>';
+
+  const mg = a.management;
+  const management = (mg.staleDone.length || mg.noSubtasks.length)
+    ? [
+      block('تکمیل شده‌اند اما وضعیت آن‌ها در Jira هنوز Done نشده است — وضعیت به‌روز شود', mg.staleDone, base),
+      block('در وضعیت In Progress هستند اما ساب‌تسک ندارند — ساب‌تسک‌های بک‌اند و فرانت‌اند تعریف شود', mg.noSubtasks, base)
+    ].join('')
+    : '<p class="role-empty">مورد نیازمند اقدام وجود ندارد.</p>';
+
+  return `
+    <p class="section-note">${scope}</p>
+    <div class="roles">
+      <div class="role"><h3>تیم فرانت‌اند</h3>${frontend}</div>
+      <div class="role"><h3>تیم بک‌اند</h3>${backend}</div>
+      <div class="role"><h3>مدیریت پروژه / راهبر تیم</h3>${management}</div>
+    </div>`;
 }
 
 function statTile(label, color, value, sub) {
@@ -67,11 +113,9 @@ export function renderReport(report, { previous = null, insights = null, dailySu
   const t = report.totals;
   const d = pct(t.done, t.total), w = pct(t.inProgress, t.total), b = pct(t.backlog, t.total);
   const generated = new Date(report.generatedAt).toLocaleString('fa-IR', { dateStyle: 'medium', timeStyle: 'short' });
-  const prevDelta = previous?.totals?.done !== undefined ? deltaSpan(t.done, previous.totals.done) : '<span class="delta flat">دیتای دیروز نیست</span>';
+  const prevDelta = previous?.totals?.done !== undefined ? deltaSpan(t.done, previous.totals.done) : '<span class="delta flat">داده‌ی روز قبل موجود نیست</span>';
   const bullets = insights ? summaryBullets(insights) : [];
   const key = esc(report.projectKey);
-
-  const subtitle = `دیتای زنده از Jira · تولید شد: <span class="num">${esc(generated)}</span>`;
 
   return shell(`ردیاب ${report.projectKey}`, `
     <div class="page">
@@ -79,7 +123,7 @@ export function renderReport(report, { previous = null, insights = null, dailySu
       <header>
         <span class="eyebrow">${key} · LIVE</span>
         <h1>ردیاب پروژه ${key}</h1>
-        <p class="subtitle">${subtitle}</p>
+        <p class="subtitle">داده‌ی زنده از Jira · زمان تولید: <span class="num">${esc(generated)}</span></p>
       </header>
 
       <div class="stats">
@@ -90,7 +134,7 @@ export function renderReport(report, { previous = null, insights = null, dailySu
 
       <section>
         <h2>نمای کلی پیشرفت</h2>
-        <p class="section-note">Done یعنی همه‌ی ساب‌تسک‌های بک‌اند و فرانت واقعاً Done باشن — نه status ظاهری استوری</p>
+        <p class="section-note">«انجام‌شده» یعنی همه‌ی ساب‌تسک‌های بک‌اند و فرانت‌اند انجام شده باشند، نه صرفاً وضعیت ظاهری استوری.</p>
         <div class="overall-bar">
           <span style="width:${d}%;background:var(--done);">${Math.round(d)}%</span>
           <span style="width:${w}%;background:var(--wip);">${Math.round(w)}%</span>
@@ -99,27 +143,27 @@ export function renderReport(report, { previous = null, insights = null, dailySu
       </section>
 
       <section>
-        <h2>روند ۷ روز گذشته — استوری‌های Done‌شده</h2>
-        <p class="section-note">هر روز چندتا استوری واقعاً کامل شد — روزی که آخرین ساب‌تسکش Done شد، نه روزی که status خود استوری تغییر کرد</p>
+        <h2>روند ۷ روز گذشته — استوری‌های تکمیل‌شده</h2>
+        <p class="section-note">تعداد استوری‌هایی که هر روز به‌طور کامل انجام شده‌اند؛ مبنا تاریخ انجام آخرین ساب‌تسک است، نه تغییر وضعیت خود استوری.</p>
         ${buildStoryChart(dailyStories)}
       </section>
 
       <section>
-        <h2>روند ۷ روز گذشته — ساب‌تسک بک‌اند در برابر فرانت</h2>
-        <p class="section-note">هر روز چندتا ساب‌تسک بک‌اند و چندتا فرانت Done شده — مستقیم از تاریخچه‌ی Jira (changelog)</p>
+        <h2>روند ۷ روز گذشته — ساب‌تسک‌های بک‌اند و فرانت‌اند</h2>
+        <p class="section-note">تعداد ساب‌تسک‌های بک‌اند و فرانت‌اند انجام‌شده در هر روز، بر اساس تاریخچه‌ی Jira.</p>
         ${buildSubtaskChart(dailySubtasks, report.lanes)}
       </section>
 
       <section>
         <h2>پیشرفت به تفکیک ماژول</h2>
-        <p class="section-note">به‌ترتیب تعداد استوری — گروه‌بندی از پیشوند عنوان (US-XXX) یا اپیک استوری</p>
+        <p class="section-note">مرتب‌شده بر اساس تعداد استوری؛ گروه‌بندی بر اساس پیشوند عنوان (US-XXX) یا اپیک.</p>
         <div class="modules">${report.modules.map(moduleRow).join('')}</div>
       </section>
 
       <section>
-        <h2>تسک‌های در حال انجام</h2>
-        <p class="section-note">به‌تفکیک ماژول — ماژولی که استوری آماده‌ی فرانت داره بالاتره. روی هر ماژول بزن تا استوری‌هاش باز شه</p>
-        ${report.inProgressRows.length ? inProgressGroups(report.inProgressRows, report.modules, report.baseUrl) : '<p class="section-note">هیچ استوری In Progress‌ای نیست</p>'}
+        <h2>استوری‌های در حال انجام</h2>
+        <p class="section-note">به تفکیک ماژول؛ ماژول‌های دارای استوری آماده‌ی فرانت‌اند در ابتدا آمده‌اند. برای مشاهده‌ی جزئیات، روی هر ماژول کلیک کنید.</p>
+        ${report.inProgressRows.length ? inProgressGroups(report.inProgressRows, report.modules, report.baseUrl) : '<p class="section-note">استوری در حال انجامی وجود ندارد.</p>'}
       </section>
 
       <section>
@@ -137,19 +181,19 @@ export function renderReport(report, { previous = null, insights = null, dailySu
 
       <section>
         <h2>اسپرینت‌ها</h2>
-        <p class="section-note">چی تو هر اسپرینت زدیم، چی نزدیم، چی باید بزنیم — وضعیت واقعی از رو ساب‌تسک‌ها، نه status ظاهری استوری</p>
+        <p class="section-note">برای هر اسپرینت: موارد انجام‌شده، انجام‌نشده و باقی‌مانده. وضعیت بر اساس ساب‌تسک‌ها محاسبه شده است.</p>
         ${sprintSection(sprints, report)}
       </section>
 
       <section>
         <h2>خلاصه اجرایی</h2>
-        <p class="summary headline"><span class="num">${Math.round(d)}%</span> کل پروژه Done — ${t.done} از ${t.total} استوری. ${prevDelta}</p>
+        <p class="summary headline"><span class="num">${Math.round(d)}%</span> از کل پروژه انجام شده است (${t.done} از ${t.total} استوری). ${prevDelta}</p>
         ${bullets.length ? `<ul class="summary">${bullets.join('')}</ul>` : ''}
       </section>
 
       <section>
-        <h2>الان می‌تونی این‌ها رو هم‌زمان صدا بزنی</h2>
-        ${parallelPlanHtml(insights, report)}
+        <h2>اقدامات پیشنهادی به تفکیک نقش</h2>
+        ${roleActions(insights, report)}
       </section>
 
       <footer>

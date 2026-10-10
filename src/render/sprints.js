@@ -16,8 +16,8 @@ function storyBadge(st) {
 
 /** What we did / didn't do / still have to do, per sprint — state from true completion. */
 export function sprintSection(sprints, report) {
-  if (!sprints) return '<p class="section-note">اطلاعات اسپرینت از Jira Agile خونده نشد (دسترسی یا خطا) — بقیه‌ی گزارش سالمه.</p>';
-  if (sprints.length === 0) return '<p class="section-note">هیچ اسپرینتی برای این پروژه پیدا نشد.</p>';
+  if (!sprints) return '<p class="section-note">اطلاعات اسپرینت از Jira دریافت نشد (عدم دسترسی یا خطا)؛ سایر بخش‌های گزارش معتبر است.</p>';
+  if (sprints.length === 0) return '<p class="section-note">اسپرینتی برای این پروژه یافت نشد.</p>';
 
   const notDoneBefore = new Map(); // story key -> earlier sprint it was planned into and left unfinished
   const firstOpenIdx = sprints.findIndex((x) => x.state !== 'closed');
@@ -31,19 +31,19 @@ export function sprintSection(sprints, report) {
     const pctOf = (n) => (stories.length ? (n / stories.length) * 100 : 0);
 
     const headline = sp.state === 'closed'
-      ? `<b class="num">${done.length}</b> از <span class="num">${stories.length}</span> انجام شد — <b class="num">${rest}</b> نزدیم`
-      : `<b class="num">${rest}</b> باید بزنیم — <span class="num">${done.length}</span> از <span class="num">${stories.length}</span> انجام شده`;
+      ? `<b class="num">${done.length}</b> از <span class="num">${stories.length}</span> انجام شد — <b class="num">${rest}</b> مورد انجام نشد`
+      : `<b class="num">${rest}</b> مورد باقی‌مانده — <span class="num">${done.length}</span> از <span class="num">${stories.length}</span> انجام شده`;
 
     const ordered = [...wip, ...backlog, ...done]
       .sort((a, b) => (a.trueState === 'done') - (b.trueState === 'done') || byKey(a, b));
     const rows = ordered.map((st) => {
       const carried = notDoneBefore.get(st.key);
-      const tag = carried ? `<span class="sp-carried">↪ از ${esc(carried)} مونده</span>` : '';
+      const tag = carried ? `<span class="sp-carried">↪ باقی‌مانده از ${esc(carried)}</span>` : '';
       return `<tr>
         <td class="num">${esc(st.key)}</td>
         <td style="text-align:right;white-space:normal;">${esc(st.summary)}${tag}</td>
         <td>${storyBadge(st)}</td>
-        <td><a href="${esc(`${report.baseUrl}/browse/${st.key}`)}" target="_blank" rel="noopener">باز کن</a></td>
+        <td><a href="${esc(`${report.baseUrl}/browse/${st.key}`)}" target="_blank" rel="noopener">مشاهده</a></td>
       </tr>`;
     }).join('');
 
@@ -63,7 +63,7 @@ export function sprintSection(sprints, report) {
       <div class="mod-acc-body table-wrap">
         <table>
           <thead><tr><th>استوری</th><th>عنوان</th><th>وضعیت</th><th>لینک</th></tr></thead>
-          <tbody>${rows || '<tr><td colspan="4">استوری‌ای تو این اسپرینت نیست</td></tr>'}</tbody>
+          <tbody>${rows || '<tr><td colspan="4">استوری‌ای در این اسپرینت وجود ندارد</td></tr>'}</tbody>
         </table>
       </div>
     </details>`;

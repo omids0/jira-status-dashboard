@@ -48,7 +48,7 @@ test('unauthenticated visitors are sent to /login', async () => {
   const page = await (await fetch(`${base}/login`)).text();
   assert.match(page, /Personal Access Token/);
   assert.ok(!page.includes('name="project"'), 'project is chosen after login, not on the login form');
-  assert.match(page, /توکن رو از کجا بیارم/);
+  assert.match(page, /دریافت توکن/);
   assert.match(page, /Personal Access Tokens/);
   assert.ok(page.includes('/plugins/servlet/personal-access-tokens'));
 });
@@ -57,7 +57,7 @@ test('bad token is rejected on the login page, no session cookie', async () => {
   const res = await fetch(`${base}/login`, formPost({ baseUrl: jira.url, token: 'wrong' }));
   assert.equal(res.status, 400);
   assert.equal(cookieOf(res), '');
-  assert.match(await res.text(), /Jira توکن رو قبول نکرد/);
+  assert.match(await res.text(), /Jira توکن را نپذیرفت/);
 });
 
 test('invalid base URL is rejected before touching Jira', async () => {
@@ -77,7 +77,7 @@ test('login lands on a page with a project select box and no report yet', async 
   assert.match(html, /<select name="project"/);
   assert.match(html, /<option value="DMA">DMA — DMA project<\/option>/);
   assert.match(html, /<option value="ABC">ABC — ABC project<\/option>/);
-  assert.match(html, /یه پروژه انتخاب کن/);
+  assert.ok(html.includes('<h2>انتخاب پروژه</h2>'));
   assert.ok(!html.includes('ردیاب پروژه'), 'no report before a project is chosen');
   assert.ok(!html.includes('good-token'), 'token must never reach the browser');
 });
@@ -88,8 +88,8 @@ test('choosing DMA in the select shows its report, with DMA selected', async () 
   assert.match(html, /ردیاب پروژه DMA/);
   assert.match(html, /<option value="DMA" selected>/);
   assert.match(html, /Test User/);
-  assert.match(html, /آماده برای فرانت/);
-  assert.match(html, /فرانت در حال انجام/);
+  assert.match(html, /آماده‌ی شروع فرانت‌اند/);
+  assert.match(html, /فرانت‌اند در حال انجام/);
   assert.match(html, /Sprint One/);
   assert.match(html, /Sprint Two/);
   assert.match(html, /AAA/);
@@ -104,8 +104,8 @@ test('the choice sticks for the session: plain / keeps showing the project', asy
 test('parallel list is scoped to the planning sprint (no active one -> next future)', async () => {
   const { cookie } = await login();
   const html = await get(cookie, '/?project=DMA');
-  const plan = html.slice(html.indexOf('هم‌زمان صدا بزنی'));
-  assert.ok(plan.includes('اسپرینت بعدی (اسپرینت فعالی نیست)'));
+  const plan = html.slice(html.indexOf('اقدامات پیشنهادی به تفکیک نقش'));
+  assert.ok(plan.includes('اسپرینت فعالی وجود ندارد؛ مبنا اسپرینت بعدی است'));
   assert.match(plan, /Sprint Two/);
   assert.match(plan, /DMA-2/);
 });
@@ -125,7 +125,7 @@ test('switching to ABC groups by epic and has no sprints', async () => {
   assert.match(html, /ردیاب پروژه ABC/);
   assert.match(html, /<option value="ABC" selected>/);
   assert.match(html, /Onboarding epic/);
-  assert.match(html, /هیچ اسپرینتی برای این پروژه پیدا نشد/);
+  assert.match(html, /اسپرینتی برای این پروژه یافت نشد/);
 });
 
 test('unknown project bounces back to the select with a message', async () => {

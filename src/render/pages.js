@@ -9,18 +9,18 @@ const TOKEN_PATH = '/plugins/servlet/personal-access-tokens';
 /** How to get a Personal Access Token from inside Jira (not Confluence — they keep separate tokens). */
 function tokenHelp(lockedBaseUrl) {
   const direct = lockedBaseUrl
-    ? `<a href="${esc(lockedBaseUrl + TOKEN_PATH)}" target="_blank" rel="noopener">مستقیم باز کن</a>`
-    : `یا مستقیم: آدرس Jira + <span class="num">${TOKEN_PATH}</span>`;
+    ? `<a href="${esc(lockedBaseUrl + TOKEN_PATH)}" target="_blank" rel="noopener">باز کردن صفحه‌ی توکن</a>`
+    : `مسیر مستقیم: آدرس Jira + <span class="num">${TOKEN_PATH}</span>`;
   return `<div class="help">
-      <b>توکن رو از کجا بیارم؟</b>
+      <b>دریافت توکن</b>
       <ol>
-        <li>وارد <b>Jira</b> بشو (نه Confluence یا ویکی — توکن‌هاشون جداست).</li>
-        <li>روی آواتار پروفایلت کلیک کن و <b>Profile</b> رو بزن.</li>
-        <li>از منوی کناری <b>Personal Access Tokens</b> رو انتخاب کن. ${direct}</li>
-        <li><b>Create token</b> رو بزن، یه اسم بده (مثلاً <span class="num">jira-dashboard</span>) و تاریخ انقضا انتخاب کن.</li>
-        <li>توکن فقط <b>یه بار</b> نشون داده می‌شه — همون لحظه کپی کن و اینجا paste کن.</li>
+        <li>وارد <b>Jira</b> شوید (نه Confluence؛ توکن‌های این دو سامانه جدا هستند).</li>
+        <li>روی تصویر پروفایل کلیک کنید و گزینه‌ی <b>Profile</b> را انتخاب کنید.</li>
+        <li>از منوی کناری، <b>Personal Access Tokens</b> را انتخاب کنید. ${direct}</li>
+        <li>روی <b>Create token</b> کلیک کنید، یک نام (برای مثال <span class="num">jira-dashboard</span>) و تاریخ انقضا تعیین کنید.</li>
+        <li>توکن فقط <b>یک بار</b> نمایش داده می‌شود؛ آن را همان لحظه کپی و در این فیلد وارد کنید.</li>
       </ol>
-      <span class="pick-hint">توکن همون دسترسی‌های حساب خودت رو داره، یعنی فقط پروژه‌هایی رو می‌بینی که تو Jira بهشون دسترسی داری. نسخه‌ی Jira باید Data Center یا Server (۸.۱۴ به بعد) باشه.</span>
+      <span class="pick-hint">توکن همان دسترسی‌های حساب کاربری شما را دارد؛ بنابراین فقط پروژه‌هایی نمایش داده می‌شوند که در Jira به آن‌ها دسترسی دارید. نسخه‌ی Jira باید Data Center یا Server (۸.۱۴ به بعد) باشد.</span>
     </div>`;
 }
 
@@ -34,7 +34,7 @@ export function renderLogin({ baseUrl = '', lockedBaseUrl = null, error = '' } =
   return shell('ورود — ردیاب Jira', `
     <div class="login-wrap">
       <h1>ردیاب وضعیت پروژه Jira</h1>
-      <p>Personal Access Token جیرا رو وارد کن. بعد از ورود، پروژه رو از لیست بالای صفحه انتخاب می‌کنی. توکن فقط تو حافظه‌ی همین سشن سرور می‌مونه، رو دیسک ذخیره نمی‌شه.</p>
+      <p>Personal Access Token حساب Jira خود را وارد کنید. پس از ورود، پروژه از فهرست بالای صفحه انتخاب می‌شود. توکن فقط در حافظه‌ی همین نشست سرور نگه داشته می‌شود و روی دیسک ذخیره نمی‌شود.</p>
       ${errorLine(error)}
       <form method="post" action="/login">
         ${urlField}
@@ -54,9 +54,9 @@ export function renderHome({ projects, user = '', error = '', embedded = false, 
     <div class="page">
       ${toolbar({ projects, user, embedded, hideProjects: fatal })}
       <section>
-        <h2>${fatal ? 'اتصال به Jira ممکن نشد' : 'یه پروژه انتخاب کن'}</h2>
+        <h2>${fatal ? 'اتصال به Jira ممکن نشد' : 'انتخاب پروژه'}</h2>
         ${errorLine(error)}
-        ${fatal ? '' : `<p class="section-note">از لیست بالای صفحه پروژه‌ای که می‌خوای ببینی رو انتخاب کن (${projects.length} پروژه در دسترسته).</p>`}
+        ${fatal ? '' : `<p class="section-note">پروژه‌ی مورد نظر را از فهرست بالای صفحه انتخاب کنید (${projects.length} پروژه در دسترس است).</p>`}
       </section>
     </div>`);
 }

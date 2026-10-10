@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Not a plugin: an empty project whose only job is to let Atlassian's
+     jira-maven-plugin start a throwaway Jira for CI. Our real jar (built by
+     scripts/build-plugin.js) is uploaded afterwards through UPM. -->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>io.github.omids0.ci</groupId>
+  <artifactId>jira-runner</artifactId>
+  <version>1.0.0</version>
+  <packaging>pom</packaging>
+
+  <properties>
+    <amps.version>9.13.2</amps.version>
+    <jira.version>9.15.2</jira.version>
+  </properties>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>com.atlassian.maven.plugins</groupId>
+        <artifactId>jira-maven-plugin</artifactId>
+        <version>${amps.version}</version>
+        <configuration>
+          <productVersion>${jira.version}</productVersion>
+          <productDataVersion>${jira.version}</productDataVersion>
+          <httpPort>2990</httpPort>
+          <contextPath>/jira</contextPath>
+          <installPlugin>false</installPlugin>
+          <skipAmpsPomCheck>true</skipAmpsPomCheck>
+          <skipAllPrompts>true</skipAllPrompts>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>

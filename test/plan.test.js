@@ -60,3 +60,36 @@ test('one story per module even inside the sprint', () => {
   assert.deepEqual(keysOf(insights), ['A-1']);
   assert.deepEqual(insights.parallelPlan.queued.map((x) => x.key), ['A-2']);
 });
+
+test('role actions: backend gets unfinished backend work and not-started sprint stories', () => {
+  const r = report([
+    row('A-1', 'M1', { beDone: 1, beTotal: 2 }),                 // backend running
+    row('A-2', 'M1', { beDone: 1, beTotal: 2, feTotal: 1 }),     // frontend started early, backend still open
+    row('B-1', 'M2'),                                            // backend done -> frontend's
+    row('C-1', 'M3', { beDone: 0, beTotal: 1 })                  // outside the sprint
+  ]);
+  r.storyIndex = {
+    'D-1': { key: 'D-1', trueState: 'backlog', summary: 'not started, in sprint' },
+    'D-2': { key: 'D-2', trueState: 'backlog', summary: 'not started, other sprint' }
+  };
+  const sprint = { name: 'S', state: 'active', keys: ['A-1', 'A-2', 'B-1', 'D-1'] };
+  const { actions } = computeInsights(r, sprint);
+
+  assert.deepEqual(actions.backend.inProgress.map((x) => x.key), ['A-1', 'A-2']);
+  assert.deepEqual(actions.backend.notStarted.map((x) => x.key), ['D-1']);
+  assert.deepEqual(actions.frontend.readyNow.map((x) => x.key), ['B-1']);
+  assert.deepEqual(actions.frontend.inProgress.map((x) => x.key), ['A-2']);
+});
+
+test('role actions: management gets stale and sub-task-less stories; finished frontend does not block a module', () => {
+  const stale = { ...row('S-1', 'M1', { beDone: 1, beTotal: 1, feDone: 1, feTotal: 1 }) };
+  stale.subtaskInfo.stale = true;
+  const bare = row('N-1', 'M2', { beDone: 0, beTotal: 0 });
+  const ready = row('R-1', 'M1');
+  const { actions, parallelPlan } = computeInsights(report([stale, bare, ready]), null);
+
+  assert.deepEqual(actions.management.staleDone.map((x) => x.key), ['S-1']);
+  assert.deepEqual(actions.management.noSubtasks.map((x) => x.key), ['N-1']);
+  assert.deepEqual(parallelPlan.blockedModules, [], 'a fully finished (stale) story must not block M1');
+  assert.deepEqual(actions.frontend.readyNow.map((x) => x.key), ['R-1']);
+});

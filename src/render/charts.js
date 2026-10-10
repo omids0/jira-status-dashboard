@@ -1,6 +1,6 @@
 import { esc, localTodayKey, shortFa } from './util.js';
 
-const NO_DATA = '<p class="section-note">دیتای این نمودار از Jira خونده نشد (مثلاً دسترسی به changelog نیست) — بقیه‌ی گزارش سالمه.</p>';
+const NO_DATA = '<p class="section-note">داده‌ی این نمودار از Jira دریافت نشد (برای مثال، دسترسی به تاریخچه‌ی تغییرات وجود ندارد)؛ سایر بخش‌های گزارش معتبر است.</p>';
 
 const dayLabel = (d, today) =>
   `<text x="LX" y="LY" text-anchor="middle" font-size="10.5" fill="${today ? 'var(--accent)' : 'var(--ink-faint)'}" font-weight="${today ? '700' : '400'}" font-family="Vazirmatn, sans-serif">${today ? 'امروز' : esc(shortFa(d.date))}</text>`;

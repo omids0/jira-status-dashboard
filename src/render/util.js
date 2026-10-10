@@ -20,7 +20,7 @@ export function deltaSpan(current, previous) {
   const diff = current - previous;
   if (diff === 0) return '<span class="delta flat">±0</span>';
   const cls = diff > 0 ? 'up' : 'down';
-  return `<span class="delta ${cls}">${diff > 0 ? '+' : ''}${diff} از دیروز</span>`;
+  return `<span class="delta ${cls}">${diff > 0 ? '+' : ''}${diff} نسبت به دیروز</span>`;
 }
 
 export const byKey = (a, b) => a.key.localeCompare(b.key, undefined, { numeric: true });

@@ -64,7 +64,7 @@ export function createApp(config) {
     console.error(err.message);
     if (err instanceof JiraError && err.status === 401) {
       endSession(req, res);
-      res.redirect(loginUrl('توکن Jira معتبر نیست یا منقضی شده — دوباره وارد شو'));
+      res.redirect(loginUrl('توکن Jira معتبر نیست یا منقضی شده است؛ لطفاً دوباره وارد شوید.'));
       return;
     }
     res.status(err instanceof JiraError && err.status === 0 ? 502 : 500).send(
@@ -94,8 +94,8 @@ export function createApp(config) {
       renderLogin({ lockedBaseUrl: config.jiraBaseUrl, baseUrl: req.body.baseUrl, error })
     );
 
-    if (!baseUrl) return page('آدرس Jira معتبر نیست (باید http:// یا https:// داشته باشه)');
-    if (!token) return page('توکن لازمه');
+    if (!baseUrl) return page('آدرس Jira معتبر نیست (باید با http:// یا https:// شروع شود).');
+    if (!token) return page('وارد کردن توکن الزامی است.');
 
     const candidate = { baseUrl, token };
     try {
@@ -109,7 +109,7 @@ export function createApp(config) {
       res.redirect('/');
     } catch (err) {
       console.error(err.message);
-      if (err instanceof JiraError && err.isAuth) return page('Jira توکن رو قبول نکرد (۴۰۱/۴۰۳)');
+      if (err instanceof JiraError && err.isAuth) return page('Jira توکن را نپذیرفت (۴۰۱/۴۰۳).');
       return page(err instanceof JiraError ? err.message : 'ورود ناموفق بود');
     }
   });
@@ -145,7 +145,7 @@ export function createApp(config) {
           console.error(err.message);
           const bad = session.projectKey;
           session.projectKey = null;
-          return home(`خواندن پروژه ${bad} ممکن نشد — پروژه وجود نداره یا دسترسی نداری`);
+          return home(`خواندن پروژه ${bad} ممکن نشد؛ پروژه وجود ندارد یا به آن دسترسی ندارید.`);
         }
         throw err;
       }

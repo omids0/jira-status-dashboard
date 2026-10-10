@@ -163,7 +163,8 @@ export function computeInsights(report, planningSprint = null) {
   // has frontend work in flight is excluded entirely.
   // Frontend in flight blocks its module no matter which sprint it belongs to
   // (the shared files are the same); only the *candidates* are sprint-scoped.
-  const modulesWithActiveFrontend = new Set(rows.filter((r) => r.subtaskInfo.feTotal > 0).map((r) => r.moduleId));
+  const frontendActive = (r) => r.subtaskInfo.feTotal > 0 && !r.subtaskInfo.stale;
+  const modulesWithActiveFrontend = new Set(rows.filter(frontendActive).map((r) => r.moduleId));
   const sprintKeys = planningSprint ? new Set(planningSprint.keys) : null;
   const candidates = sprintKeys ? readyForFrontend.filter((r) => sprintKeys.has(r.key)) : readyForFrontend;
   const byModule = {};
@@ -182,5 +183,30 @@ export function computeInsights(report, planningSprint = null) {
     queued: groups.flatMap((g) => g.slice(1))
   };
 
-  return { readyForFrontend, noSubtaskYet, staleDone, zeroProgressModules, leadModule, parallelPlan };
+  // What each role should do next, scoped to the planning sprint when known.
+  const inScope = (key) => !sprintKeys || sprintKeys.has(key);
+  const byKeyAsc = (a, b) => a.key.localeCompare(b.key, undefined, { numeric: true });
+  const actions = {
+    frontend: {
+      readyNow: parallelPlan.now,
+      afterThose: parallelPlan.queued,
+      blockedModules: parallelPlan.blockedModules,
+      inProgress: rows.filter((r) => frontendActive(r) && inScope(r.key)),
+      readyOutsideSprint: parallelPlan.outsideSprint
+    },
+    backend: {
+      // unfinished backend work, whether or not the frontend already started
+      inProgress: rows.filter((r) => inScope(r.key) && r.subtaskInfo.beTotal > 0 && r.subtaskInfo.beDone < r.subtaskInfo.beTotal),
+      // planned into the sprint but nobody has started (only meaningful with a sprint)
+      notStarted: sprintKeys
+        ? Object.values(report.storyIndex || {}).filter((s) => s.trueState === 'backlog' && sprintKeys.has(s.key)).sort(byKeyAsc)
+        : []
+    },
+    management: {
+      staleDone,
+      noSubtasks: noSubtaskYet
+    }
+  };
+
+  return { readyForFrontend, noSubtaskYet, staleDone, zeroProgressModules, leadModule, parallelPlan, actions };
 }

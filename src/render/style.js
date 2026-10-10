@@ -130,4 +130,13 @@ button:hover{filter:brightness(1.08);}
 .help b{color:var(--ink);}
 .help ol{margin:6px 0 8px;padding-inline-start:20px;}
 .help a{color:var(--accent);}
+.roles{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;}
+.role{border:1px solid var(--line);border-radius:12px;padding:14px 16px;background:var(--surface);}
+.role h3{margin:0 0 8px;font-size:14.5px;}
+.role-item{margin:10px 0 4px;font-size:13px;font-weight:600;}
+.role-note{margin:10px 0 0;font-size:12.5px;color:var(--ink-muted);}
+.role-empty{margin:4px 0 0;font-size:13px;color:var(--ink-muted);}
+.task-list{margin:0;padding-inline-start:18px;font-size:12.5px;line-height:1.8;}
+.task-list a{color:var(--accent);text-decoration:none;font-weight:600;}
+.task-list .more{color:var(--ink-faint);list-style:none;}
 `;
