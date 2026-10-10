@@ -29,12 +29,23 @@ export function createBrowserApp({ frame, baseUrl, projectConfig, storage, onClo
 
   const paint = (html) => {
     const doc = frame.document;
+    // The overlay (and its iframe) is gone once the user closed it; answers that
+    // arrive afterwards have nowhere to be painted.
+    if (!doc) return;
     doc.open();
     doc.write(html);
     doc.close();
-    doc.getElementById('jd-project')?.addEventListener('change', (e) => openProject(e.target.value));
-    doc.getElementById('jd-refresh')?.addEventListener('click', () => openProject(current, { refresh: true }));
-    doc.getElementById('jd-close')?.addEventListener('click', onClose);
+    // document.open() drops every listener, and while a stylesheet is still loading the
+    // parser may not have reached <body> yet, so bind on the document itself (events
+    // bubble to it) instead of looking elements up right after close().
+    doc.addEventListener('change', (e) => {
+      if (e.target?.id === 'jd-project') openProject(e.target.value);
+    });
+    doc.addEventListener('click', (e) => {
+      const hit = e.target?.closest?.('#jd-refresh, #jd-close');
+      if (hit?.id === 'jd-refresh') openProject(current, { refresh: true });
+      else if (hit?.id === 'jd-close') onClose();
+    });
   };
 
   const showHome = (error = '') => paint(renderHome({ projects, user, error, embedded: true }));

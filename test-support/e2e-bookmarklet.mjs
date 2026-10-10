@@ -136,6 +136,30 @@ try {
   await page.addScriptTag({ url: `${jira.url}/dashboard.js` });
   check('running the bookmark twice leaves exactly one overlay', (await page.locator('#jira-dashboard-overlay').count()) === 1);
 
+  // --- regression: a slow font stylesheet must not leave the select / buttons dead.
+  // (Scripts wait for preceding stylesheets, so the parser can still be above <body>
+  // when the overlay binds its listeners right after document.write.)
+  const slow = await browser.newContext({ viewport: { width: 1200, height: 800 } });
+  await slow.addCookies([{ name: 'JSESSIONID', value: 'ok', url: jira.url }]);
+  await slow.route('**/fonts.googleapis.com/**', async (route) => {
+    await new Promise((r) => setTimeout(r, 3000));
+    await route.fulfill({ status: 200, contentType: 'text/css', body: '' });
+  });
+  const sp = await slow.newPage();
+  await sp.goto(`${jira.url}/secure/Dashboard.jspa`);
+  await sp.addScriptTag({ url: `${jira.url}/dashboard.js` });
+  const sf = sp.frameLocator('#jira-dashboard-overlay iframe');
+  await sf.locator('select#jd-project').waitFor({ timeout: 20000 });
+  await sf.locator('select#jd-project').selectOption('DMA');
+  await sf.locator('h1', { hasText: 'ردیاب پروژه DMA' }).waitFor({ timeout: 20000 });
+  check('with a slow font stylesheet the project select still works', true);
+  await sf.locator('#jd-refresh').click();
+  await sf.locator('h1', { hasText: 'ردیاب پروژه DMA' }).waitFor({ timeout: 20000 });
+  check('with a slow font stylesheet refresh still works', true);
+  await sf.locator('#jd-close').click();
+  check('with a slow font stylesheet close still works', (await sp.locator('#jira-dashboard-overlay').count()) === 0);
+  await slow.close();
+
   check('no uncaught page errors', errors.length === 0, errors.join(' | '));
 } finally {
   await browser.close();

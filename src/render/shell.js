@@ -8,11 +8,9 @@ export function shell(title, body) {
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${esc(title)}</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap">
-<style>${STYLE}</style>
 <script>
+// First thing in <head>: a script placed after a stylesheet waits for that stylesheet to load,
+// which stalls the parser (and anything that touches the DOM right after document.write).
 (function () {
   var KEY = 'jira-dashboard:theme';
   try { var saved = localStorage.getItem(KEY); if (saved === 'light' || saved === 'dark') document.documentElement.setAttribute('data-theme', saved); } catch (e) {}
@@ -25,6 +23,10 @@ export function shell(title, body) {
   };
 })();
 </script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap">
+<style>${STYLE}</style>
 </head>
 <body>${body}</body>
 </html>`;
