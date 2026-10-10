@@ -4,9 +4,11 @@ services:
     ports:
       - "${PORT:-4173}:4173"
     environment:
-      # JIRA_BASE_URL: https://jira.example.com
-      # TRUST_PROXY: "true"
+      # Empty = the Jira URL is typed at login.
+      JIRA_BASE_URL: ${JIRA_BASE_URL:-}
       DEFAULT_PROJECT: ${DEFAULT_PROJECT:-}
+      # Set to "true" only when an HTTPS reverse proxy sits in front.
+      TRUST_PROXY: ${TRUST_PROXY:-false}
     volumes:
       - dashboard-data:/data
       - ./config:/app/config:ro

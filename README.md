@@ -40,6 +40,25 @@ docker run -d -p 4173:4173 -v jira-dashboard-data:/data jira-dashboard
 
 ولوم `/data` تاریخچه‌ی روزانه رو نگه می‌داره (برای «نسبت به دیروز»).
 
+## بالا آوردن با GitHub Actions (برای تیم)
+
+اجرای دائمی روی runnerهای خود GitHub ممکن نیست (job بعد از چند ساعت می‌میره) و اون runnerها هم به Jira داخلی شرکت دسترسی ندارن. راه درست: یه **self-hosted runner** روی یه ماشین تو شبکه‌ی شرکت. هر push روی `main` اپ رو روی همون ماشین با Docker بالا می‌آره و تیم با آدرس ماشین وارد می‌شه.
+
+**یک‌بار راه‌اندازی:**
+1. یه ماشین/سرور تو شبکه‌ی شرکت که **Docker** (با `docker compose`) و `curl` داره، همیشه روشنه و به Jira دسترسی داره. (Linux بهترین گزینه‌ست.)
+2. تو ریپو: **Settings → Actions → Runners → New self-hosted runner**. دستورهایی که نشون می‌ده رو روی اون ماشین اجرا کن و runner رو به‌صورت سرویس نصب کن (`./svc.sh install && ./svc.sh start`).
+3. تو ریپو: **Settings → Secrets and variables → Actions → Variables** این‌ها رو بساز:
+   - `JIRA_BASE_URL` = `https://jira.entekhabgroup.com` (پیشنهادی؛ فیلد آدرس از صفحه‌ی ورود حذف می‌شه و اپ فقط به همین Jira وصل می‌شه)
+   - `PORT` = `4173` (اختیاری)
+4. یه push روی `main` بزن، یا از تب **Actions → CI / Deploy → Run workflow**.
+
+**لینک تیم:** `http://<اسم-یا-IP-ماشین>:4173` — همین رو بده به بچه‌ها.
+
+**نکته‌های امنیتی:**
+- ریپو رو **private** نگه دار. روی ریپوی public، self-hosted runner خطرناکه (کد فورک‌ها می‌تونه روی ماشینت اجرا بشه). workflow هم عمداً فقط روی push به `main` deploy می‌کنه.
+- با HTTP ساده، توکن Jira روی شبکه‌ی داخلی بدون رمزنگاری می‌ره. اگه حساسه، پشتش یه reverse proxy با HTTPS بذار و `TRUST_PROXY=true` رو ست کن.
+- توکن‌ها فقط تو حافظه‌ی کانتینر می‌مونن؛ با هر deploy همه باید دوباره وارد بشن.
+
 ## تنظیمات (متغیر محیطی)
 
 | متغیر | پیش‌فرض | کار |

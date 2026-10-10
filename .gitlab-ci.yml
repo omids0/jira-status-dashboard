@@ -1,6 +1,0 @@
-# Runs the test suite on every push / merge request.
-test:
-  image: node:20-alpine
-  script:
-    - npm ci
-    - npm test
