@@ -1,14 +1,9 @@
-name: CI / Deploy
+name: CI
 
 on:
   push:
     branches: [main]
   pull_request:
-  workflow_dispatch:
-
-concurrency:
-  group: ci-deploy-${{ github.ref }}
-  cancel-in-progress: false
 
 jobs:
   test:
@@ -21,31 +16,3 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm test
-
-  # Runs on a machine INSIDE the company network (a self-hosted runner), because
-  # GitHub's own runners cannot reach an intranet Jira. The app then stays up in
-  # Docker on that machine and the team opens http://<machine>:<PORT>.
-  deploy:
-    needs: test
-    if: github.event_name != 'pull_request'
-    runs-on: self-hosted
-    env:
-      JIRA_BASE_URL: ${{ vars.JIRA_BASE_URL }}
-      DEFAULT_PROJECT: ${{ vars.DEFAULT_PROJECT }}
-      PORT: ${{ vars.PORT || '4173' }}
-    steps:
-      - uses: actions/checkout@v4
-      - name: Build and (re)start the container
-        run: docker compose -p jira-dashboard up -d --build --remove-orphans
-      - name: Wait until it answers
-        run: |
-          for i in $(seq 1 20); do
-            if curl -fsS "http://127.0.0.1:${PORT}/healthz" >/dev/null; then
-              echo "up on port ${PORT}"; exit 0
-            fi
-            sleep 2
-          done
-          docker compose -p jira-dashboard logs --tail 50
-          exit 1
-      - name: Remove dangling images
-        run: docker image prune -f

@@ -1,3 +1,4 @@
+# Optional: run the live (login) version of the app in Docker.
 services:
   jira-dashboard:
     build: .
@@ -7,7 +8,7 @@ services:
       # Empty = the Jira URL is typed at login.
       JIRA_BASE_URL: ${JIRA_BASE_URL:-}
       DEFAULT_PROJECT: ${DEFAULT_PROJECT:-}
-      # Set to "true" only when an HTTPS reverse proxy sits in front.
+      # "true" only behind an HTTPS reverse proxy.
       TRUST_PROXY: ${TRUST_PROXY:-false}
     volumes:
       - dashboard-data:/data

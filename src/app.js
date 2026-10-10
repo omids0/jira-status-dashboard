@@ -1,7 +1,5 @@
 import express from 'express';
-import { computeInsights, loadReport, pickPlanningSprint } from './report.js';
-import { loadDailyCompletions } from './daily.js';
-import { loadSprints } from './sprints.js';
+import { collectReportData } from './reportData.js';
 import { createHistory } from './history.js';
 import { COOKIE_NAME, createSessionStore, readCookie } from './sessions.js';
 import { JiraError, getMyself, isValidProjectKey, listProjects, normalizeBaseUrl } from './jiraClient.js';
@@ -119,28 +117,7 @@ export function createApp(config) {
   async function buildReportData(session, projectKey, { refresh }) {
     const cached = session.cache[projectKey];
     if (!refresh && cached && Date.now() - cached.at < config.reportCacheMs) return cached.data;
-
-    const cfg = config.projectConfig(projectKey);
-    const [report, sprints] = await Promise.all([
-      loadReport(session, projectKey, cfg),
-      loadSprints(session, projectKey, cfg).catch((err) => {
-        console.error(`sprints skipped: ${err.message}`);
-        return null;
-      })
-    ]);
-    const daily = await loadDailyCompletions(session, projectKey, cfg, report.doneStoryKeys, 7).catch((err) => {
-      console.error(`daily charts skipped: ${err.message}`);
-      return { subtasks: null, stories: null };
-    });
-
-    const host = new URL(session.baseUrl).host;
-    const data = {
-      report,
-      sprints,
-      daily,
-      insights: computeInsights(report, pickPlanningSprint(sprints)),
-      previous: history.recordAndGetPrevious(`${host}__${projectKey}`, report)
-    };
+    const data = await collectReportData(session, projectKey, config.projectConfig(projectKey), history);
     session.cache[projectKey] = { at: Date.now(), data };
     return data;
   }

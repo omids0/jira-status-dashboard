@@ -63,7 +63,7 @@ function statTile(label, color, value, sub) {
   return `<div class="stat"><div class="stat-top"><span class="stat-label">${label}</span><span class="dot" style="background:var(${color})"></span></div><div class="stat-value num" style="color:var(${color})">${Math.round(value)}%</div><div class="stat-sub num">${sub}</div></div>`;
 }
 
-export function renderReport(report, { previous = null, insights = null, dailySubtasks = null, dailyStories = null, sprints = null, user = '', projects = [] } = {}) {
+export function renderReport(report, { previous = null, insights = null, dailySubtasks = null, dailyStories = null, sprints = null, user = '', projects = [], staticMode = false } = {}) {
   const t = report.totals;
   const d = pct(t.done, t.total), w = pct(t.inProgress, t.total), b = pct(t.backlog, t.total);
   const generated = new Date(report.generatedAt).toLocaleString('fa-IR', { dateStyle: 'medium', timeStyle: 'short' });
@@ -71,13 +71,17 @@ export function renderReport(report, { previous = null, insights = null, dailySu
   const bullets = insights ? summaryBullets(insights) : [];
   const key = esc(report.projectKey);
 
+  const subtitle = staticMode
+    ? `نسخه‌ی ثابت، خودکار به‌روز می‌شه · آخرین به‌روزرسانی: <span class="num">${esc(generated)}</span>`
+    : `دیتای زنده از Jira · تولید شد: <span class="num">${esc(generated)}</span>`;
+
   return shell(`ردیاب ${report.projectKey}`, `
     <div class="page">
-      ${toolbar({ projects, current: report.projectKey, user, withReportActions: true })}
+      ${toolbar({ projects, current: report.projectKey, user, withReportActions: true, staticMode })}
       <header>
         <span class="eyebrow">${key} · LIVE</span>
         <h1>ردیاب پروژه ${key}</h1>
-        <p class="subtitle">دیتای زنده از Jira · تولید شد: <span class="num">${esc(generated)}</span></p>
+        <p class="subtitle">${subtitle}</p>
       </header>
 
       <div class="stats">
@@ -153,5 +157,5 @@ export function renderReport(report, { previous = null, insights = null, dailySu
       <footer>
         <span>منبع: ${esc(report.baseUrl)} — پروژه ${key}</span>
       </footer>
-    </div>`);
+    </div>`, { noindex: staticMode });
 }

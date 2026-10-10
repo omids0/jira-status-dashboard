@@ -40,24 +40,35 @@ docker run -d -p 4173:4173 -v jira-dashboard-data:/data jira-dashboard
 
 ولوم `/data` تاریخچه‌ی روزانه رو نگه می‌داره (برای «نسبت به دیروز»).
 
-## بالا آوردن با GitHub Actions (برای تیم)
+## گزارش اشتراکی روی GitHub Pages (بدون سرور)
 
-اجرای دائمی روی runnerهای خود GitHub ممکن نیست (job بعد از چند ساعت می‌میره) و اون runnerها هم به Jira داخلی شرکت دسترسی ندارن. راه درست: یه **self-hosted runner** روی یه ماشین تو شبکه‌ی شرکت. هر push روی `main` اپ رو روی همون ماشین با Docker بالا می‌آره و تیم با آدرس ماشین وارد می‌شه.
+برای اینکه فقط با GitHub یه **لینک** به همکارا بدی: یه workflow زمان‌بندی‌شده (`.github/workflows/report.yml`) از Jira می‌خونه، برای هر پروژه یه صفحه‌ی HTML ثابت می‌سازه و روی GitHub Pages می‌ذاره. همکارا بدون لاگین و بدون نصب چیزی لینک رو باز می‌کنن و با سلکت‌باکس بین پروژه‌ها جابه‌جا می‌شن. گزارش یه **عکس لحظه‌ای**ـه که خودکار تازه می‌شه (پیش‌فرض: ساعتی، در ساعات کاری شنبه تا چهارشنبه)، نه زنده.
 
-**یک‌بار راه‌اندازی:**
-1. یه ماشین/سرور تو شبکه‌ی شرکت که **Docker** (با `docker compose`) و `curl` داره، همیشه روشنه و به Jira دسترسی داره. (Linux بهترین گزینه‌ست.)
-2. تو ریپو: **Settings → Actions → Runners → New self-hosted runner**. دستورهایی که نشون می‌ده رو روی اون ماشین اجرا کن و runner رو به‌صورت سرویس نصب کن (`./svc.sh install && ./svc.sh start`).
-3. تو ریپو: **Settings → Secrets and variables → Actions → Variables** این‌ها رو بساز:
-   - `JIRA_BASE_URL` = `https://jira.entekhabgroup.com` (پیشنهادی؛ فیلد آدرس از صفحه‌ی ورود حذف می‌شه و اپ فقط به همین Jira وصل می‌شه)
-   - `PORT` = `4173` (اختیاری)
-4. یه push روی `main` بزن، یا از تب **Actions → CI / Deploy → Run workflow**.
+**یک‌بار راه‌اندازی** (تو ریپو → Settings):
+1. **Pages → Build and deployment → Source: GitHub Actions**.
+2. **Secrets and variables → Actions → Secrets:**
+   - `JIRA_TOKEN` = Personal Access Token. بهتره از یه اکانت فقط‌خواندنی/سرویس بسازی؛ توکن همه‌ی دسترسی‌های صاحبش رو داره.
+   - `REPORT_PASSWORD` = یه رمز برای تیم (پایین توضیح داده).
+3. **Variables:**
+   - `JIRA_BASE_URL` = `https://jira.entekhabgroup.com`
+   - `PROJECTS` = `DMA,DEKACP` (کلید پروژه‌هایی که می‌خوای تو سلکت باشن)
+4. **Actions → Publish report → Run workflow**. بعد از چند دقیقه لینک تو خروجی job (و تو Settings → Pages) میاد: `https://<user>.github.io/jira-status-dashboard/`.
 
-**لینک تیم:** `http://<اسم-یا-IP-ماشین>:4173` — همین رو بده به بچه‌ها.
+**امنیت — مهم:**
+- Pages روی ریپوی **public** برای کل اینترنت بازه، و عنوان استوری‌های شرکت تو گزارشه. برای همین اگه `REPORT_PASSWORD` ست باشه، صفحه‌ها قبل از انتشار با AES رمزنگاری می‌شن (staticrypt) و فقط با رمز تیم باز می‌شن. اگه ریپو public باشه و رمز نذاشته باشی، workflow عمداً fail می‌شه.
+- Pages خصوصی (فقط اعضای ریپو) فقط تو پلن‌های Enterprise Cloud هست.
+- رمز تیم رو جدا از لینک بده، و هر وقت یه نفر از تیم رفت عوضش کن.
 
-**نکته‌های امنیتی:**
-- ریپو رو **private** نگه دار. روی ریپوی public، self-hosted runner خطرناکه (کد فورک‌ها می‌تونه روی ماشینت اجرا بشه). workflow هم عمداً فقط روی push به `main` deploy می‌کنه.
-- با HTTP ساده، توکن Jira روی شبکه‌ی داخلی بدون رمزنگاری می‌ره. اگه حساسه، پشتش یه reverse proxy با HTTPS بذار و `TRUST_PROXY=true` رو ست کن.
-- توکن‌ها فقط تو حافظه‌ی کانتینر می‌مونن؛ با هر deploy همه باید دوباره وارد بشن.
+**محدودیت اصلی:** runnerهای GitHub از اینترنت می‌خونن، پس Jira باید از بیرون شبکه‌ی شرکت در دسترس باشه. اگه نیست، job تو مرحله‌ی «Build pages from Jira» با `Cannot reach Jira` fail می‌شه (و صفحه‌ی قبلی سر جاش می‌مونه). اون موقع باید از نسخه‌ی لایو روی یه ماشین داخلی استفاده کنی.
+
+**اجرای دستی و تست لوکال:**
+
+```bash
+JIRA_BASE_URL=https://jira.entekhabgroup.com JIRA_TOKEN=... PROJECTS=DMA,DEKACP npm run build:static
+# خروجی: dist/DMA.html, dist/DEKACP.html, dist/index.html
+```
+
+تاریخچه‌ی «نسبت به دیروز» بین اجراها با cache خود GitHub Actions نگه داشته می‌شه.
 
 ## تنظیمات (متغیر محیطی)
 
@@ -125,5 +136,7 @@ src/daily.js           روند روزانه از changelog
 src/sprints.js         اسپرینت‌ها (Jira Agile)
 src/history.js         تاریخچه‌ی روزانه
 src/render/            HTML
+src/staticBuild.js     ساخت صفحه‌های ثابت برای Pages
+scripts/build-static.js  CLI ساخت صفحه‌های ثابت
 config/projects.json   تنظیمات هر پروژه
 ```
