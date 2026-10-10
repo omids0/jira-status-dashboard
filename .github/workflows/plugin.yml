@@ -47,6 +47,17 @@ jobs:
           path: ~/.m2/repository
           key: m2-jira-${{ env.JIRA_VERSION }}-amps-${{ env.AMPS_VERSION }}
 
+      # Jira still depends on javax.transaction:jta:1.0.1B, whose jar was never
+      # published to any public repository (Sun licence). The usual SDK fix:
+      # install the API-identical jta 1.1 from Maven Central under that name.
+      - name: Provide javax.transaction:jta 1.0.1B
+        run: |
+          if [ ! -f ~/.m2/repository/javax/transaction/jta/1.0.1B/jta-1.0.1B.jar ]; then
+            curl -fsSL -o /tmp/jta-1.1.jar https://repo1.maven.org/maven2/javax/transaction/jta/1.1/jta-1.1.jar
+            mvn -B -q install:install-file -Dfile=/tmp/jta-1.1.jar \
+              -DgroupId=javax.transaction -DartifactId=jta -Dversion=1.0.1B -Dpackaging=jar -DgeneratePom=true
+          fi
+
       - name: Start Jira ${{ env.JIRA_VERSION }}
         run: |
           # stdin must stay open: the SDK shuts Jira down on EOF (Ctrl-D)
