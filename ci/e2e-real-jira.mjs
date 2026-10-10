@@ -15,10 +15,19 @@ const isOurs = (s) => /jira-status-dashboard|jira-dashboard/.test(s || '');
 const browser = await chromium.launch({ channel: 'chrome', headless: true });
 try {
   const context = await browser.newContext({ viewport: { width: 1366, height: 900 } });
-  const login = await context.request.post(`${BASE}/rest/auth/1/session`, { data: { username: 'admin', password: 'admin' } });
-  check('logged in to Jira through its REST session API', login.ok(), String(login.status()));
-
   const page = await context.newPage();
+
+  // Log in like a person: Jira's own login form (the REST session API answers
+  // 403 to scripted clients because of its XSRF protection).
+  await page.goto(`${BASE}/login.jsp`, { waitUntil: 'domcontentloaded' });
+  await page.locator('#login-form-username').fill('admin');
+  await page.locator('#login-form-password').fill('admin');
+  await Promise.all([
+    page.waitForLoadState('domcontentloaded'),
+    page.locator('#login-form-submit').click()
+  ]);
+  const me = await context.request.get(`${BASE}/rest/api/2/myself`);
+  check('logged in to Jira through its login form', me.ok(), String(me.status()));
   const ourErrors = [];
   page.on('pageerror', (e) => { if (isOurs(e.stack)) ourErrors.push(e.message); });
   page.on('console', (m) => { if (m.type() === 'error' && isOurs(m.text())) ourErrors.push(m.text()); });
