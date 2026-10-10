@@ -1,5 +1,5 @@
 import express from 'express';
-import { computeInsights, loadReport } from './report.js';
+import { computeInsights, loadReport, pickPlanningSprint } from './report.js';
 import { loadDailyCompletions } from './daily.js';
 import { loadSprints } from './sprints.js';
 import { createHistory } from './history.js';
@@ -161,7 +161,7 @@ export function createApp(config) {
       report,
       sprints,
       daily,
-      insights: computeInsights(report),
+      insights: computeInsights(report, pickPlanningSprint(sprints)),
       previous: history.recordAndGetPrevious(`${host}__${projectKey}`, report)
     };
     session.cache[projectKey] = { at: Date.now(), data };

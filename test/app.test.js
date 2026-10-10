@@ -81,6 +81,15 @@ test('login with a project goes straight to its report (DMA, US-prefix modules)'
   assert.ok(!html.includes('good-token'), 'token must never reach the browser');
 });
 
+test('parallel list is scoped to the planning sprint (no active one -> next future)', async () => {
+  const { cookie } = await login({ project: 'DMA' });
+  const html = await (await fetch(`${base}/`, { headers: { cookie } })).text();
+  const plan = html.slice(html.indexOf('هم‌زمان صدا بزنی'));
+  assert.ok(plan.includes('اسپرینت بعدی (اسپرینت فعالی نیست)'));
+  assert.match(plan, /Sprint Two/);
+  assert.match(plan, /DMA-2/);
+});
+
 test('the true-completion numbers are right', async () => {
   const { cookie } = await login({ project: 'DMA' });
   const html = await (await fetch(`${base}/`, { headers: { cookie } })).text();

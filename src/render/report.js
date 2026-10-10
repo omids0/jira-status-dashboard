@@ -42,13 +42,20 @@ function parallelPlanHtml(insights, report) {
   const blocked = plan?.blockedModules?.length
     ? `<p class="section-note">ماژول‌های کنار گذاشته‌شده چون یه استوریشون فرانتش در حال انجامه، فایل مشترک می‌خورن: ${plan.blockedModules.map((id) => esc(labelOf(id))).join('، ')}</p>`
     : '';
-  if (now.length === 0) return `<p class="section-note">الان هیچی برای صدا زدن موازی نیست.</p>${blocked}`;
+  const sprint = plan?.sprint;
+  const scope = sprint
+    ? `<p class="section-note">فقط استوری‌های ${sprint.state === 'active' ? 'اسپرینت فعال' : 'اسپرینت بعدی (اسپرینت فعالی نیست)'}: <b>${esc(sprint.name)}</b></p>`
+    : '<p class="section-note">اسپرینتی پیدا نشد (یا خونده نشد) — همه‌ی استوری‌های پروژه در نظر گرفته شدن.</p>';
+  const outside = plan?.outsideSprint?.length
+    ? `<p class="section-note">${plan.outsideSprint.length} استوری آماده‌ی فرانت دیگه هست که تو این اسپرینت نیست: ${plan.outsideSprint.map((r) => `<span class="num">${esc(r.key)}</span>`).join('، ')}</p>`
+    : '';
+  if (now.length === 0) return `${scope}<p class="section-note">الان هیچی برای صدا زدن موازی نیست.</p>${blocked}${outside}`;
   const rows = now.map((r) => `<tr>
         <td class="num">${esc(r.key)}</td>
         <td style="text-align:right;white-space:normal;">${esc(r.summary)}</td>
         <td><a href="${esc(`${report.baseUrl}/browse/${r.key}`)}" target="_blank" rel="noopener">باز کن</a></td>
       </tr>`).join('');
-  return `<div class="table-wrap"><table><thead><tr><th>استوری</th><th>عنوان</th><th>لینک</th></tr></thead><tbody>${rows}</tbody></table></div>${blocked}`;
+  return `${scope}<div class="table-wrap"><table><thead><tr><th>استوری</th><th>عنوان</th><th>لینک</th></tr></thead><tbody>${rows}</tbody></table></div>${blocked}${outside}`;
 }
 
 function statTile(label, color, value, sub) {

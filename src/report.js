@@ -122,8 +122,25 @@ export async function loadReport(session, projectKey, cfg) {
   };
 }
 
-/** The "what actually needs a human's attention" bullets a raw table never surfaces. */
-export function computeInsights(report) {
+/**
+ * The sprint the team is working in right now: the active one, else the next
+ * upcoming one (between sprints "now" means "what we start next"). Null when
+ * sprint data is unavailable or the board has nothing open.
+ */
+export function pickPlanningSprint(sprints) {
+  if (!sprints) return null;
+  const open = sprints.filter((s) => s.state === 'active' || s.state === 'future');
+  const active = open.find((s) => s.state === 'active');
+  if (active) return active;
+  const startOf = (s) => (s.startDate ? new Date(s.startDate).getTime() : Infinity);
+  return [...open].sort((a, b) => startOf(a) - startOf(b) || a.id - b.id)[0] || null;
+}
+
+/**
+ * The "what actually needs a human's attention" bullets a raw table never surfaces.
+ * `planningSprint` scopes the parallel-work suggestion to that sprint's stories.
+ */
+export function computeInsights(report, planningSprint = null) {
   const rows = report.inProgressRows;
   const readyForFrontend = rows.filter((r) => {
     const i = r.subtaskInfo;
@@ -144,9 +161,13 @@ export function computeInsights(report) {
   // integration files (tab/route registry, one service file, one locale file),
   // so only ONE story per module is collision-free — and a module that already
   // has frontend work in flight is excluded entirely.
+  // Frontend in flight blocks its module no matter which sprint it belongs to
+  // (the shared files are the same); only the *candidates* are sprint-scoped.
   const modulesWithActiveFrontend = new Set(rows.filter((r) => r.subtaskInfo.feTotal > 0).map((r) => r.moduleId));
+  const sprintKeys = planningSprint ? new Set(planningSprint.keys) : null;
+  const candidates = sprintKeys ? readyForFrontend.filter((r) => sprintKeys.has(r.key)) : readyForFrontend;
   const byModule = {};
-  for (const r of readyForFrontend) {
+  for (const r of candidates) {
     if (modulesWithActiveFrontend.has(r.moduleId)) continue;
     (byModule[r.moduleId] ||= []).push(r);
   }
@@ -154,6 +175,8 @@ export function computeInsights(report) {
     [...list].sort((a, b) => a.key.localeCompare(b.key, undefined, { numeric: true }))
   );
   const parallelPlan = {
+    sprint: planningSprint ? { name: planningSprint.name, state: planningSprint.state } : null,
+    outsideSprint: sprintKeys ? readyForFrontend.filter((r) => !sprintKeys.has(r.key)) : [],
     blockedModules: [...modulesWithActiveFrontend],
     now: groups.map((g) => g[0]),
     queued: groups.flatMap((g) => g.slice(1))
