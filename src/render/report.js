@@ -2,6 +2,7 @@ import { shell } from './shell.js';
 import { toolbar } from './toolbar.js';
 import { buildStoryChart, buildSubtaskChart } from './charts.js';
 import { sprintSection } from './sprints.js';
+import { peopleSection } from './people.js';
 import { inProgressGroups } from './verdicts.js';
 import { deltaSpan, esc, pct } from './util.js';
 
@@ -109,7 +110,7 @@ function statTile(label, color, value, sub) {
   return `<div class="stat"><div class="stat-top"><span class="stat-label">${label}</span><span class="dot" style="background:var(${color})"></span></div><div class="stat-value num" style="color:var(${color})">${Math.round(value)}%</div><div class="stat-sub num">${sub}</div></div>`;
 }
 
-export function renderReport(report, { previous = null, insights = null, dailySubtasks = null, dailyStories = null, sprints = null, user = '', projects = [], embedded = false } = {}) {
+export function renderReport(report, { previous = null, insights = null, dailySubtasks = null, dailyStories = null, sprints = null, people = null, user = '', projects = [], embedded = false } = {}) {
   const t = report.totals;
   const d = pct(t.done, t.total), w = pct(t.inProgress, t.total), b = pct(t.backlog, t.total);
   const generated = new Date(report.generatedAt).toLocaleString('fa-IR', { dateStyle: 'medium', timeStyle: 'short' });
@@ -183,6 +184,11 @@ export function renderReport(report, { previous = null, insights = null, dailySu
         <h2>اسپرینت‌ها</h2>
         <p class="section-note">برای هر اسپرینت: موارد انجام‌شده، انجام‌نشده و باقی‌مانده. وضعیت بر اساس ساب‌تسک‌ها محاسبه شده است.</p>
         ${sprintSection(sprints, report)}
+      </section>
+
+      <section>
+        <h2>گزارش افراد — ۷ روز گذشته</h2>
+        ${peopleSection(people, report.baseUrl)}
       </section>
 
       <section>

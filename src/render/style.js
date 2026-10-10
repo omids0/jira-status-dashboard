@@ -139,4 +139,6 @@ button:hover{filter:brightness(1.08);}
 .task-list{margin:0;padding-inline-start:18px;font-size:12.5px;line-height:1.8;}
 .task-list a{color:var(--accent);text-decoration:none;font-weight:600;}
 .task-list .more{color:var(--ink-faint);list-style:none;}
+td a{color:var(--accent);text-decoration:none;font-weight:600;}
+td a:hover{text-decoration:underline;}
 `;

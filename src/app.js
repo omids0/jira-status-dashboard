@@ -154,6 +154,7 @@ export function createApp(config) {
         previous: data.previous,
         insights: data.insights,
         sprints: data.sprints,
+        people: data.people,
         user: session.user,
         projects,
         dailySubtasks: data.daily.subtasks,

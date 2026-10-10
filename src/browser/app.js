@@ -66,7 +66,7 @@ export function createBrowserApp({ frame, baseUrl, projectConfig, storage, onClo
       }
       if (mine !== seq) return;
       paint(renderReport(data.report, {
-        previous: data.previous, insights: data.insights, sprints: data.sprints, user,
+        previous: data.previous, insights: data.insights, sprints: data.sprints, people: data.people, user,
         projects, dailySubtasks: data.daily.subtasks, dailyStories: data.daily.stories, embedded: true
       }));
     } catch (err) {

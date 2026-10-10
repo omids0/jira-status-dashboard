@@ -8,14 +8,33 @@ const WIP = status('In Progress', 'indeterminate');
 const TODO = status('BackLog', 'new');
 
 const story = (key, summary, st, extra = {}) => ({ key, fields: { summary, status: st, ...extra } });
-const sub = (key, parent, st, component, histories = []) => ({
+
+export const USERS = {
+  ali: { key: 'ali', name: 'ali', displayName: 'Ali Backend' },
+  sara: { key: 'sara', name: 'sara', displayName: 'Sara Frontend' }
+};
+const ago = (hours) => new Date(Date.now() - hours * 36e5).toISOString();
+const move = (hoursAgo, from, to) => ({ created: ago(hoursAgo), items: [{ field: 'status', fromString: from, toString: to }] });
+
+const sub = (key, parent, st, component, histories = [], assignee = null, worklogs = []) => ({
   key,
-  fields: { status: st, components: component ? [{ name: component }] : [], parent: { key: parent } },
+  fields: {
+    summary: `${component || 'task'} work for ${parent}`,
+    status: st,
+    components: component ? [{ name: component }] : [],
+    parent: { key: parent },
+    assignee,
+    created: ago(24 * 10),
+    worklog: { total: worklogs.length, worklogs }
+  },
   changelog: { histories }
 });
 
-const now = new Date().toISOString();
-const doneToday = [{ created: now, items: [{ field: 'status', toString: 'Done' }] }];
+// started 30h ago, done 2h ago -> 28h cycle
+const startedThenDone = [move(30, 'BackLog', 'In Progress'), move(2, 'In Progress', 'Done')];
+// done 3 days ago, reopened 2 days ago, done again 1h ago
+const reopened = [move(80, 'BackLog', 'In Progress'), move(72, 'In Progress', 'Done'), move(48, 'Done', 'In Progress'), move(1, 'In Progress', 'Done')];
+const log = (user, hoursAgo, seconds) => ({ author: user, started: ago(hoursAgo), timeSpentSeconds: seconds });
 
 export const DATA = {
   DMA: {
@@ -26,10 +45,10 @@ export const DATA = {
       story('DMA-4', 'US-BBB-02: not started', TODO)
     ],
     subtasks: [
-      sub('DMA-10', 'DMA-2', DONE, 'Back-End', doneToday),
-      sub('DMA-11', 'DMA-2', DONE, 'Back-End', doneToday),
-      sub('DMA-12', 'DMA-3', DONE, 'Back-End', doneToday),
-      sub('DMA-13', 'DMA-3', WIP, 'Front-End')
+      sub('DMA-10', 'DMA-2', DONE, 'Back-End', startedThenDone, USERS.ali, [log(USERS.ali, 5, 7200), log(USERS.ali, 24 * 30, 3600)]),
+      sub('DMA-11', 'DMA-2', DONE, 'Back-End', startedThenDone, USERS.ali),
+      sub('DMA-12', 'DMA-3', DONE, 'Back-End', reopened, USERS.ali),
+      sub('DMA-13', 'DMA-3', WIP, 'Front-End', [move(10, 'BackLog', 'In Progress')], USERS.sara, [log(USERS.sara, 3, 5400)])
     ],
     sprints: [
       { id: 1, name: 'Sprint One', state: 'closed', startDate: '2026-09-01T00:00:00.000+03:30', endDate: '2026-09-10T00:00:00.000+03:30', keys: ['DMA-1', 'DMA-2'] },
@@ -81,7 +100,10 @@ export function startFakeJira({ token = 'good-token', sessionCookie = 'JSESSIONI
         const project = /project = (\w+)/.exec(jql)?.[1] || /\(([A-Z]+)-/.exec(jql)?.[1];
         const data = DATA[project];
         if (!data) return send(400, { errorMessages: [`project ${project} does not exist`] });
-        if (jql.includes('subTaskIssueTypes()')) issues = data.subtasks.filter((s) => s.fields.status.statusCategory.key === 'done');
+        if (jql.includes('subTaskIssueTypes()') && jql.includes('statusCategory = Done')) issues = data.subtasks.filter((s) => s.fields.status.statusCategory.key === 'done');
+        else if (jql.includes('subTaskIssueTypes()')) issues = data.subtasks; // "updated in the window": all of them
+        else if (jql.includes('statusCategory = "In Progress"')) issues = [...data.stories, ...data.subtasks].filter((s) => s.fields.status.statusCategory.key === 'indeterminate' && s.fields.assignee);
+        else if (jql.includes('worklogDate')) issues = data.subtasks.filter((s) => s.fields.worklog.total > 0);
         else if (jql.startsWith('parent in')) {
           const parents = /\(([^)]*)\)/.exec(jql)[1].split(',');
           issues = data.subtasks.filter((s) => parents.includes(s.fields.parent.key));
