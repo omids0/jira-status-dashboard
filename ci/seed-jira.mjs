@@ -8,15 +8,21 @@ const log = (...a) => console.log('[seed]', ...a);
 
 async function ensureProject() {
   try { await api('GET', `/rest/api/2/project/${KEY}`); log('project exists'); return; } catch { /* create */ }
+  try {
+    const types = await api('GET', '/rest/api/2/project/type');
+    log('project types available:', types.map((t) => t.key).join(', '));
+  } catch (e) { log('project types unknown:', e.message.split('\n')[0]); }
   const attempts = [
     { projectTypeKey: 'software', projectTemplateKey: 'com.pyxis.greenhopper.jira:gh-simplified-scrum-classic' },
     { projectTypeKey: 'software', projectTemplateKey: 'com.pyxis.greenhopper.jira:gh-scrum-template' },
-    { projectTypeKey: 'business', projectTemplateKey: 'com.atlassian.jira-core-project-templates:jira-core-simplified-task-tracking' }
+    { projectTypeKey: 'software' },
+    { projectTypeKey: 'business', projectTemplateKey: 'com.atlassian.jira-core-project-templates:jira-core-simplified-task-tracking' },
+    { projectTypeKey: 'business' }
   ];
   for (const a of attempts) {
     try {
       await api('POST', '/rest/api/2/project', { key: KEY, name: 'Demo DMA', lead: 'admin', ...a });
-      log('project created with', a.projectTemplateKey);
+      log('project created with', a.projectTypeKey, a.projectTemplateKey || '(no template)');
       return;
     } catch (e) { log('template failed:', e.message.split('\n')[0]); }
   }

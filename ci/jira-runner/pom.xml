@@ -30,6 +30,13 @@
           <installPlugin>false</installPlugin>
           <skipAmpsPomCheck>true</skipAmpsPomCheck>
           <skipAllPrompts>true</skipAllPrompts>
+          <!-- Jira Software, like the real instance: Story type, scrum boards, sprints -->
+          <applications>
+            <application>
+              <applicationKey>jira-software</applicationKey>
+              <version>${jira.version}</version>
+            </application>
+          </applications>
         </configuration>
       </plugin>
     </plugins>
