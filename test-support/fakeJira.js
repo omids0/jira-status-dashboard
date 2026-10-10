@@ -48,16 +48,21 @@ export const DATA = {
 
 const EPICS = { 'ABC-100': 'Onboarding epic' };
 
-export function startFakeJira({ token = 'good-token' } = {}) {
+// `pages(req, res, url)` may serve non-API content (e.g. a fake Jira HTML page
+// and the bundled dashboard.js) and returns true when it handled the request.
+export function startFakeJira({ token = 'good-token', sessionCookie = 'JSESSIONID=ok', pages = null } = {}) {
   const calls = [];
   const server = http.createServer((req, res) => {
     const url = new URL(req.url, 'http://x');
+    if (pages?.(req, res, url)) return;
     calls.push(url.pathname + url.search);
     const send = (code, body) => {
       res.writeHead(code, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify(body));
     };
-    if (req.headers.authorization !== `Bearer ${token}`) return send(401, { errorMessages: ['nope'] });
+    const bearerOk = req.headers.authorization === `Bearer ${token}`;
+    const cookieOk = (req.headers.cookie || '').split(/;\s*/).includes(sessionCookie);
+    if (!bearerOk && !cookieOk) return send(401, { errorMessages: ['nope'] });
 
     const p = url.pathname;
     if (p === '/rest/api/2/myself') return send(200, { displayName: 'Test User' });

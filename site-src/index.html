@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ردیاب وضعیت پروژه Jira — نصب</title>
+<style>
+  :root{--bg:#f5f7f9;--surface:#fff;--ink:#1a2230;--muted:#5c6779;--line:#dde2e9;--accent:#3956b8;}
+  @media (prefers-color-scheme:dark){:root{--bg:#14161b;--surface:#1c1f26;--ink:#eef1f6;--muted:#a0aabb;--line:#2c313c;--accent:#8fa0f5;}}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:Vazirmatn,Tahoma,sans-serif;line-height:1.9}
+  main{max-width:680px;margin:0 auto;padding:48px 24px 80px}
+  h1{font-size:26px;margin:0 0 6px}
+  .lead{color:var(--muted);margin:0 0 28px}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:22px;margin-bottom:18px}
+  .card h2{font-size:16px;margin:0 0 10px}
+  ol{margin:0;padding-inline-start:22px}
+  li{margin-bottom:6px}
+  a.bm{display:inline-block;background:var(--accent);color:#fff;text-decoration:none;font-weight:700;padding:12px 22px;border-radius:10px;margin:8px 0;cursor:grab}
+  .hint{color:var(--muted);font-size:13px}
+  code{direction:ltr;unicode-bidi:isolate;background:var(--bg);padding:1px 6px;border-radius:5px;font-size:13px}
+  .warn{border-color:#c07e1e}
+</style>
+</head>
+<body>
+<main>
+  <h1>ردیاب وضعیت پروژه Jira</h1>
+  <p class="lead">گزارش زنده‌ی هر پروژه‌ی Jira — پیشرفت واقعی از رو ساب‌تسک‌ها، روند ۷ روز، اسپرینت‌ها و پیشنهاد «چی رو هم‌زمان بزنیم». بدون نصب، بدون سرور، بدون توکن.</p>
+
+  <div class="card">
+    <h2>۱) بوکمارک رو نصب کن (یک‌بار)</h2>
+    <p>این دکمه‌ی آبی رو با ماوس بگیر و بنداز روی <b>نوار بوکمارک</b> مرورگرت.</p>
+    <a id="bm" class="bm" href="#" onclick="return false">ردیاب Jira</a>
+    <p class="hint">نوار بوکمارک پیدا نیست؟ <code>Ctrl+Shift+B</code> رو بزن. کشیدن نشد؟ روی دکمه راست‌کلیک کن و «Add link to bookmarks / افزودن لینک به بوکمارک» رو بزن.</p>
+  </div>
+
+  <div class="card">
+    <h2>۲) هر بار که خواستی گزارش رو ببینی</h2>
+    <ol>
+      <li>وارد <b>Jira</b> شرکتت شو (همون‌طور که همیشه می‌شی).</li>
+      <li>رو بوکمارک «ردیاب Jira» کلیک کن.</li>
+      <li>از سلکت‌باکس بالا پروژه رو انتخاب کن. با <code>Esc</code> یا «بستن» برمی‌گردی به Jira.</li>
+    </ol>
+    <p class="hint">توکن لازم نیست: گزارش تو خود صفحه‌ی Jira اجرا می‌شه و از همون لاگین فعلی‌ت استفاده می‌کنه، پس فقط پروژه‌هایی رو می‌بینی که دسترسی داری. هیچ دیتایی جایی ذخیره یا فرستاده نمی‌شه — همه‌چیز تو مرورگر خودته.</p>
+  </div>
+
+  <div class="card warn">
+    <h2>نکته‌ی امنیتی</h2>
+    <p>بوکمارک یه اسکریپت از همین سایت رو داخل صفحه‌ی Jira اجرا می‌کنه، یعنی اون اسکریپت به لاگین تو تو Jira دسترسی داره. فقط وقتی استفاده کن که به صاحب این ریپو اعتماد داری. شرکت‌ها می‌تونن ریپو رو <b>fork</b> کنن و Pages خودشون رو بسازن؛ همین صفحه تو اون سایت، بوکمارکی می‌سازه که اسکریپت رو از fork خودشون بخونه.</p>
+  </div>
+
+  <div class="card">
+    <h2>کار نکرد؟</h2>
+    <ul>
+      <li>«تو Jira لاگین نیستی»: اول وارد Jira شو، بعد دوباره بوکمارک.</li>
+      <li>هیچ اتفاقی نیفتاد: Jira ممکنه با سیاست امنیتی (CSP) جلوی اسکریپت خارجی رو گرفته باشه. <code>F12 → Console</code> رو باز کن و خطا رو بفرست.</li>
+      <li>عدد ماژول‌ها یا بک‌اند/فرانت صفره: اسم کامپوننت‌های Jira شما فرق داره؛ تو <code>config/projects.json</code> ریپو تنظیمش کن.</li>
+    </ul>
+  </div>
+</main>
+<script>
+  // Built from where THIS page lives, so a fork's Pages site yields a bookmarklet
+  // that loads the fork's own dashboard.js.
+  (function () {
+    var src = new URL('dashboard.js', location.href).href;
+    var code = "(function(){var s=document.createElement('script');s.src='" + src +
+      "?t='+Date.now();s.onerror=function(){alert('بارگذاری ردیاب ناموفق بود (احتمالاً CSP یا اینترنت)')};document.head.appendChild(s)})()";
+    document.getElementById('bm').setAttribute('href', 'javascript:' + encodeURIComponent(code));
+  })();
+</script>
+</body>
+</html>

@@ -49,10 +49,10 @@ export function renderLogin({ baseUrl = '', lockedBaseUrl = null, error = '' } =
 }
 
 /** Logged in, no project chosen yet (or the chosen one failed): just the selector. */
-export function renderHome({ projects, user = '', error = '' }) {
+export function renderHome({ projects, user = '', error = '', embedded = false }) {
   return shell('ردیاب Jira', `
     <div class="page">
-      ${toolbar({ projects, user })}
+      ${toolbar({ projects, user, embedded })}
       <section>
         <h2>یه پروژه انتخاب کن</h2>
         ${errorLine(error)}

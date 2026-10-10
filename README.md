@@ -1,111 +1,66 @@
 # ردیاب وضعیت پروژه Jira
 
-داشبورد زنده برای هر پروژه‌ی Jira (Data Center). با Personal Access Token وارد می‌شی، پروژه رو انتخاب می‌کنی (DMA، DEKACP، هرچی)، و گزارش مستقیم از Jira ساخته می‌شه:
+گزارش زنده‌ی هر پروژه‌ی Jira (Data Center / Server) — برای مدیر، تیم و هر شرکتی:
 
-- **پیشرفت واقعی** — استوری فقط وقتی Done حساب می‌شه که ساب‌تسک‌هاش (بک‌اند و فرانت) Done باشن، نه status ظاهری خود استوری.
-- **روند ۷ روز گذشته** — از changelog خود Jira: چندتا استوری و چندتا ساب‌تسک بک‌اند/فرانت هر روز Done شد.
+- **پیشرفت واقعی** — استوری فقط وقتی Done حساب می‌شه که ساب‌تسک‌های بک‌اند و فرانتش Done باشن، نه status ظاهری خود استوری.
+- **روند ۷ روز گذشته** — از changelog خود Jira: چندتا استوری و ساب‌تسک بک‌اند/فرانت هر روز Done شد.
 - **اسپرینت‌ها** — هر اسپرینت: چی زدیم، چی نزدیم، چی باید بزنیم، چی از اسپرینت قبل مونده.
-- **ماژول‌ها** — گروه‌بندی از پیشوند عنوان (`US-XXX-01`) یا از اپیک، هرکدوم برای پروژه‌ای که داره.
-- **خلاصه اجرایی و لیست «همین الان هم‌زمان بزن»** — کدوم استوری‌ها بک‌اندشون تمومه و فرانتشون شروع نشده، بدون تداخل با کار در حال انجام.
-- چاپ / PDF، مقایسه با دیروز.
+- **ماژول‌ها** — گروه‌بندی از پیشوند عنوان (`US-XXX-01`) یا از اپیک.
+- **خلاصه اجرایی و «همین الان هم‌زمان بزن»** — استوری‌های آماده‌ی فرانت از اسپرینت فعال، بدون تداخل با کار در حال انجام.
+- سلکت‌باکس پروژه، چاپ / PDF، مقایسه با دیروز.
 
-## برای هر شرکت و هر Jira
+## راه ۱ — بوکمارک روی لینک GitHub (بدون سرور، بدون توکن، بدون IT)
 
-اپ به هیچ شرکت یا پروژه‌ای قفل نیست: هر کاربر موقع ورود **آدرس Jira و توکن خودش** رو می‌زنه و پروژه رو از سلکت‌باکس انتخاب می‌کنه. هیچ Secret، Variable یا کانفیگ لازم نیست؛ کانفیگ فقط برای دقیق‌تر شدن پروژه‌های خاصه (پایین‌تر).
+این راه برای «یه لینک بدم به تیم» ساخته شده. چون Jira هدر CORS نمی‌فرسته، یه صفحه‌ی GitHub Pages نمی‌تونه مستقیم بهش وصل بشه؛ برای همین گزارش تو **خود صفحه‌ی Jira** اجرا می‌شه (با بوکمارک) و از همون لاگین فعلی کاربر استفاده می‌کنه.
 
-دو راه اجرا (هرکدوم روی ماشینی که به Jira خودتون می‌رسه):
+**یک‌بار برای صاحب ریپو** (Settings → Pages → **Source: GitHub Actions**؛ بعد هر push روی `main` سایت خودکار منتشر می‌شه):
+
+> Pages روی پلن رایگان فقط برای ریپوی **public** کار می‌کنه. تو ریپو هیچ دیتای شرکتی نیست؛ دیتا فقط تو مرورگر کاربر از Jira خودش خونده می‌شه.
+
+**برای هر همکار:**
+1. لینک `https://omids0.github.io/jira-status-dashboard/` رو باز کن و دکمه‌ی «ردیاب Jira» رو بنداز رو نوار بوکمارک (`Ctrl+Shift+B` برای نمایش نوار).
+2. وارد Jira شو، رو بوکمارک بزن، از سلکت بالا پروژه رو انتخاب کن. `Esc` یا «بستن» برمی‌گردونه.
+
+**برای هر شرکت دیگه:** ریپو رو fork کن و Pages خودت رو روشن کن؛ صفحه‌ی نصب فورک، بوکمارکی می‌سازه که اسکریپت رو از همون فورک می‌خونه. با تنظیم `config/projects.json` تو فورک، اسم کامپوننت‌ها و ماژول‌های شرکتت رو بده.
+
+**امنیت:** بوکمارک یه اسکریپت از سایت Pages رو داخل صفحه‌ی Jira اجرا می‌کنه، پس اون اسکریپت به سشن Jira کاربر دسترسی داره. فقط به ریپویی که بهش اعتماد داری وصل شو (یا fork خودت). هیچ دیتایی به جایی فرستاده نمی‌شه؛ تاریخچه‌ی «نسبت به دیروز» تو `localStorage` همون مرورگره.
+
+**محدودیت:** اگه Jira با CSP سخت‌گیرانه جلوی اسکریپت خارجی رو بگیره، بوکمارک کار نمی‌کنه (Jira شرکت ما فقط `frame-ancestors` داره و مشکلی نیست). تو اون حالت از راه ۲ استفاده کن.
+
+## راه ۲ — سرور (با لاگین Personal Access Token)
+
+برای وقتی که می‌خوای یه آدرس ثابت روی ماشینی تو شبکه‌ی شرکت داشته باشی. هر کاربر آدرس Jira و توکن خودش رو موقع ورود می‌زنه و پروژه رو از سلکت‌باکس بالای صفحه انتخاب می‌کنه؛ هیچ Secret یا کانفیگی لازم نیست.
 
 ```bash
-# Docker — بدون clone
+# Node 20+
+npm install && npm start          # http://localhost:4173
+
+# یا Docker
 docker run -d -p 4173:4173 -v jira-dashboard-data:/data ghcr.io/omids0/jira-status-dashboard:latest
-
-# یا Node 20+
-git clone https://github.com/omids0/jira-status-dashboard && cd jira-status-dashboard
-npm install && npm start
+# یا: docker compose up -d --build
 ```
 
-(ایمیج با GitHub Actions ساخته می‌شه. اگه ریپو private باشه، پکیج هم private می‌مونه؛ از **Packages → Package settings → Change visibility** عمومی‌ش کن.)
+پورت: `PORT=5000 npm start` (PowerShell: `$env:PORT=5000; npm start`). برای دسترسی از ماشین‌های دیگه `HOST=0.0.0.0`.
 
-## اجرا
-
-```bash
-npm install
-npm start            # http://localhost:4173
-```
-
-پورت رو با `PORT` عوض کن: `PORT=5000 npm start` (PowerShell: `$env:PORT=5000; npm start`).
-
-صفحه‌ی ورود فقط آدرس Jira و توکن می‌خواد. بعد از ورود، بالای صفحه یه **سلکت‌باکس** با همه‌ی پروژه‌هایی که بهشون دسترسی داری هست؛ هر پروژه‌ای رو انتخاب کنی همون لحظه گزارشش باز می‌شه، و هر وقت خواستی از همون سلکت عوضش می‌کنی. انتخاب تا آخر سشن می‌مونه. لینک مستقیم هم داری: `/?project=KEY`.
-
-### ساخت توکن
-Jira → آواتار پروفایل → **Personal Access Tokens** (`/plugins/servlet/personal-access-tokens`) → Create token.
-
-> فقط **Jira Server / Data Center** (احراز هویت Bearer). Jira Cloud با email + API token کار می‌کنه و API جستجوش فرق داره — پشتیبانی نمی‌شه.
-
-## اجرا با Docker
-
-```bash
-docker compose up -d --build        # http://localhost:4173
-```
-
-یا بدون compose:
-
-```bash
-docker build -t jira-dashboard .
-docker run -d -p 4173:4173 -v jira-dashboard-data:/data jira-dashboard
-```
-
-ولوم `/data` تاریخچه‌ی روزانه رو نگه می‌داره (برای «نسبت به دیروز»).
-
-## اختیاری: لینک ثابت برای یه تیم با GitHub Pages (بدون سرور)
-
-این بخش **مخصوص یه تیم** (یه Jira، چندتا پروژه‌ی مشخص) و اختیاریه؛ تا متغیر `PROJECTS` رو ست نکنی workflow کاری نمی‌کنه. اگه فقط می‌خوای یه **لینک** به همکارا بدی: یه workflow زمان‌بندی‌شده (`.github/workflows/report.yml`) از Jira می‌خونه، برای هر پروژه یه صفحه‌ی HTML ثابت می‌سازه و روی GitHub Pages می‌ذاره. همکارا بدون لاگین و بدون نصب چیزی لینک رو باز می‌کنن و با سلکت‌باکس بین پروژه‌ها جابه‌جا می‌شن. گزارش یه **عکس لحظه‌ای**ـه که خودکار تازه می‌شه (پیش‌فرض: ساعتی، در ساعات کاری شنبه تا چهارشنبه)، نه زنده.
-
-**یک‌بار راه‌اندازی** (تو ریپو → Settings):
-1. **Pages → Build and deployment → Source: GitHub Actions**.
-2. **Secrets and variables → Actions → Secrets:**
-   - `JIRA_TOKEN` = Personal Access Token. بهتره از یه اکانت فقط‌خواندنی/سرویس بسازی؛ توکن همه‌ی دسترسی‌های صاحبش رو داره.
-   - `REPORT_PASSWORD` = یه رمز برای تیم (پایین توضیح داده).
-3. **Variables:**
-   - `JIRA_BASE_URL` = `https://jira.entekhabgroup.com`
-   - `PROJECTS` = `DMA,DEKACP` (کلید پروژه‌هایی که می‌خوای تو سلکت باشن)
-4. **Actions → Publish report → Run workflow**. بعد از چند دقیقه لینک تو خروجی job (و تو Settings → Pages) میاد: `https://<user>.github.io/jira-status-dashboard/`.
-
-**امنیت — مهم:**
-- Pages روی ریپوی **public** برای کل اینترنت بازه، و عنوان استوری‌های شرکت تو گزارشه. برای همین اگه `REPORT_PASSWORD` ست باشه، صفحه‌ها قبل از انتشار با AES رمزنگاری می‌شن (staticrypt) و فقط با رمز تیم باز می‌شن. اگه ریپو public باشه و رمز نذاشته باشی، workflow عمداً fail می‌شه.
-- Pages خصوصی (فقط اعضای ریپو) فقط تو پلن‌های Enterprise Cloud هست.
-- رمز تیم رو جدا از لینک بده، و هر وقت یه نفر از تیم رفت عوضش کن.
-
-**محدودیت اصلی:** runnerهای GitHub از اینترنت می‌خونن، پس Jira باید از بیرون شبکه‌ی شرکت در دسترس باشه. اگه نیست، job تو مرحله‌ی «Build pages from Jira» با `Cannot reach Jira` fail می‌شه (و صفحه‌ی قبلی سر جاش می‌مونه). اون موقع باید از نسخه‌ی لایو روی یه ماشین داخلی استفاده کنی.
-
-**اجرای دستی و تست لوکال:**
-
-```bash
-JIRA_BASE_URL=https://jira.entekhabgroup.com JIRA_TOKEN=... PROJECTS=DMA,DEKACP npm run build:static
-# خروجی: dist/DMA.html, dist/DEKACP.html, dist/index.html
-```
-
-تاریخچه‌ی «نسبت به دیروز» بین اجراها با cache خود GitHub Actions نگه داشته می‌شه.
-
-## تنظیمات (متغیر محیطی)
+**ساخت توکن:** Jira → آواتار → Profile → **Personal Access Tokens** → Create token (یا `/plugins/servlet/personal-access-tokens`). توکن فقط یه بار نشون داده می‌شه.
 
 | متغیر | پیش‌فرض | کار |
 |---|---|---|
 | `PORT` | `4173` | پورت |
 | `HOST` | `127.0.0.1` | `0.0.0.0` برای سرور/داکر |
-| `JIRA_BASE_URL` | — | اگه بذاری، اپ فقط به همین Jira وصل می‌شه و فیلد آدرس از صفحه‌ی ورود حذف می‌شه |
-| `DEFAULT_PROJECT` | — | پروژه‌ای که بعد از ورود خودکار باز بشه (بدون این، اول فقط سلکت‌باکس می‌بینی) |
+| `JIRA_BASE_URL` | — | قفل کردن روی یه Jira (فیلد آدرس حذف می‌شه) — روی سرور مشترک حتماً ست کن |
+| `DEFAULT_PROJECT` | — | پروژه‌ای که بعد از ورود خودکار باز بشه |
 | `DATA_DIR` | `./data` | مسیر تاریخچه |
 | `SESSION_TTL_MINUTES` | `480` | عمر سشن بی‌فعالیت |
-| `REPORT_CACHE_SECONDS` | `30` | کش کوتاه گزارش؛ دکمه‌ی «تازه‌سازی» دورش می‌زنه |
-| `TRUST_PROXY` | `false` | پشت reverse proxy با HTTPS، `true` بذار تا کوکی `Secure` بشه |
+| `REPORT_CACHE_SECONDS` | `30` | کش کوتاه گزارش |
+| `TRUST_PROXY` | `false` | پشت HTTPS reverse proxy `true` بذار |
 | `PROJECTS_CONFIG` | `config/projects.json` | مسیر کانفیگ پروژه‌ها |
 
-**اگه روی سرور مشترک می‌ذاریش:** حتماً `JIRA_BASE_URL` رو ست کن (وگرنه هر کاربر می‌تونه سرور رو به هر آدرسی وصل کنه) و پشت HTTPS بذار. توکن فقط تو حافظه‌ی سرور می‌مونه، با ری‌استارت پاک می‌شه.
+توکن‌ها فقط تو حافظه‌ی سرور می‌مونن. با HTTP ساده روی شبکه‌ی داخلی بدون رمزنگاری می‌رن؛ اگه حساسه پشت HTTPS بذار.
 
 ## کانفیگ هر پروژه — `config/projects.json`
 
-بدون هیچ کانفیگی هم هر پروژه‌ای کار می‌کنه. برای دقیق‌تر شدن:
+بدون کانفیگ هم هر پروژه‌ای کار می‌کنه. برای دقیق‌تر شدن:
 
 ```json
 {
@@ -123,37 +78,32 @@ JIRA_BASE_URL=https://jira.entekhabgroup.com JIRA_TOKEN=... PROJECTS=DMA,DEKACP 
 
 | کلید | معنی |
 |---|---|
-| `storyJql` | JQL اضافه برای فیلتر استوری‌ها (مثلاً `summary ~ "US-"`). خالی = همه‌ی استوری‌ها |
+| `storyJql` | JQL اضافه برای فیلتر استوری‌ها (مثلاً `summary ~ "US-"`). خالی = همه |
 | `storyIssueTypes` | نوع issue استوری، پیش‌فرض `["Story"]` |
-| `components` | اسم کامپوننت‌های Jira که ساب‌تسک بک‌اند / فرانت رو مشخص می‌کنن |
-| `moduleBy` | `prefix` (از `US-XXX-01` تو عنوان) · `epic` · `none` · `auto` (پیش‌فرض: اگه ≥۵۰٪ عنوان‌ها پیشوند داشتن prefix، وگرنه epic، وگرنه یه گروه) |
+| `components` | اسم کامپوننت‌های Jira برای ساب‌تسک بک‌اند / فرانت |
+| `moduleBy` | `prefix` · `epic` · `none` · `auto` (اگه ≥۵۰٪ عنوان‌ها پیشوند داشتن prefix، وگرنه epic، وگرنه یه گروه) |
 | `modulePattern` | regex پیشوند، پیش‌فرض `US-([A-Z]+)-\d+` |
 | `moduleLabels` | اسم نمایشی ماژول‌ها |
 | `recentClosedSprints` | چندتا اسپرینت بسته‌ی آخر نشون داده بشه (پیش‌فرض ۲) |
 
-پروژه‌ای که ساب‌تسک‌هاش کامپوننت بک‌اند/فرانت ندارن هم کار می‌کنه: استوری وقتی Done حساب می‌شه که همه‌ی ساب‌تسک‌هاش Done باشن.
+پروژه‌ای که ساب‌تسک‌هاش کامپوننت بک‌اند/فرانت ندارن هم کار می‌کنه: استوری وقتی Done حساب می‌شه که همه‌ی ساب‌تسک‌هاش Done باشن. در راه ۱ کانفیگ موقع build تو اسکریپت جا می‌گیره، پس تغییرش یعنی یه push.
 
-## تست
+## توسعه و تست
 
 ```bash
-npm test
+npm test          # واحد + یکپارچه با یه Jira ساختگی
+npm run build:site   # site/dashboard.js + صفحه‌ی نصب
+npm run e2e       # Chrome واقعی: بوکمارک روی یه «Jira» ساختگی (Chrome باید نصب باشه)
+npm run dev       # سرور با ری‌استارت خودکار
 ```
 
-با یه Jira ساختگی (`test-support/fakeJira.js`) لاگین، انتخاب پروژه، گروه‌بندی با اپیک، کش، تاریخچه و خروج رو تست می‌کنه.
-
-## ساختار
-
 ```
-server.js              راه‌اندازی
-src/app.js             مسیرها: /login / (گزارش + سلکت پروژه) /logout
-src/jiraClient.js      کلاینت REST
-src/classify.js        منطق «Done واقعی»
-src/report.js          گزارش + خلاصه + پیشنهاد اجرای موازی
-src/daily.js           روند روزانه از changelog
-src/sprints.js         اسپرینت‌ها (Jira Agile)
-src/history.js         تاریخچه‌ی روزانه
-src/render/            HTML
-src/staticBuild.js     ساخت صفحه‌های ثابت برای Pages
-scripts/build-static.js  CLI ساخت صفحه‌های ثابت
-config/projects.json   تنظیمات هر پروژه
+server.js, src/app.js      راه ۲: سرور و مسیرها
+src/browser/               راه ۱: اجرا داخل صفحه‌ی Jira (overlay + localStorage)
+src/jiraClient.js          کلاینت REST (توکن Bearer یا کوکی سشن)
+src/classify.js            منطق «Done واقعی»
+src/report.js, daily.js, sprints.js, reportData.js   داده
+src/render/                HTML (مشترک بین دو راه)
+site-src/index.html        صفحه‌ی نصب بوکمارک
+scripts/build-site.js      ساخت سایت Pages با esbuild
 ```

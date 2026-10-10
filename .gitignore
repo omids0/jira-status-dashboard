@@ -5,3 +5,5 @@ data/
 dist/
 dist-encrypted/
 .data/
+site/
+e2e-shots/

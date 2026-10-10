@@ -9,25 +9,32 @@ function options(projects, current) {
   ].join('');
 }
 
-/** Live app: a GET form back to "/". Static export: jump to the sibling KEY.html file. */
-function projectSelect(projects, current, staticMode) {
-  if (staticMode) {
-    return `<div class="proj-pick"><select aria-label="پروژه" onchange="location.href=this.value+'.html'">${options(projects, current)}</select></div>`;
-  }
-  return `<form class="proj-pick" method="get" action="/">
+/**
+ * Two hosts for the same page:
+ *  - server app: a GET form back to "/", plus refresh / logout links
+ *  - embedded (bookmarklet overlay inside Jira): no navigation at all; the
+ *    overlay script listens for #jd-project / #jd-refresh / #jd-close.
+ */
+export function toolbar({ projects, current = '', user = '', withReportActions = false, embedded = false }) {
+  const select = embedded
+    ? `<div class="proj-pick"><select id="jd-project" aria-label="پروژه">${options(projects, current)}</select></div>`
+    : `<form class="proj-pick" method="get" action="/">
       <select name="project" aria-label="پروژه" onchange="this.form.submit()">${options(projects, current)}</select>
       <noscript><button type="submit">نمایش</button></noscript>
     </form>`;
-}
 
-export function toolbar({ projects, current = '', user = '', withReportActions = false, staticMode = false }) {
-  const actions = withReportActions
-    ? `${staticMode ? '' : '<a class="tb-link" href="/?refresh=1">تازه‌سازی</a>'}<button type="button" onclick="window.print()">چاپ / PDF</button>`
-    : '';
+  const refresh = embedded
+    ? '<button type="button" id="jd-refresh" class="tb-link">تازه‌سازی</button>'
+    : '<a class="tb-link" href="/?refresh=1">تازه‌سازی</a>';
+  const actions = withReportActions ? `${refresh}<button type="button" onclick="window.print()">چاپ / PDF</button>` : '';
+  const leave = embedded
+    ? '<button type="button" id="jd-close" class="tb-link">بستن</button>'
+    : '<form method="post" action="/logout"><button type="submit" class="tb-link">خروج</button></form>';
+
   return `<div class="toolbar">
-      ${projectSelect(projects, current, staticMode)}
+      ${select}
       <span class="who">${user ? esc(user) : ''}</span>
       ${actions}
-      ${staticMode ? '' : '<form method="post" action="/logout"><button type="submit" class="tb-link">خروج</button></form>'}
+      ${leave}
     </div>`;
 }

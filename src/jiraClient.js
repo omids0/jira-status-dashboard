@@ -37,8 +37,12 @@ export async function jiraGet(session, path) {
   const url = `${session.baseUrl}${path}`;
   let res;
   try {
+    // Server mode sends the Personal Access Token. Browser (bookmarklet) mode has
+    // no token: the page is already on the Jira origin, so the logged-in session
+    // cookie goes along with the request.
     res = await fetch(url, {
-      headers: { Authorization: `Bearer ${session.token}`, Accept: 'application/json' },
+      headers: { ...(session.token ? { Authorization: `Bearer ${session.token}` } : {}), Accept: 'application/json' },
+      credentials: 'same-origin',
       signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS)
     });
   } catch (err) {

@@ -11,11 +11,17 @@
     "start": "node server.js",
     "dev": "node --watch server.js",
     "build:static": "node scripts/build-static.js",
-    "test": "node --test"
+    "build:site": "node scripts/build-site.js",
+    "test": "node --test",
+    "e2e": "npm run build:site && node test-support/e2e-bookmarklet.mjs && node test-support/e2e-install-page.mjs"
   },
   "license": "UNLICENSED",
   "private": true,
   "dependencies": {
     "express": "^4.19.2"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2",
+    "playwright-core": "^1.64.0"
   }
 }
