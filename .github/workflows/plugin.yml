@@ -87,10 +87,14 @@ jobs:
           exit 1
 
       - name: Seed a demo project
-        run: node ci/seed-jira.mjs
+        run: |
+          set -o pipefail
+          node ci/seed-jira.mjs 2>&1 | tee seed.log
 
       - name: Click through the plugin in Chrome
-        run: node ci/e2e-real-jira.mjs
+        run: |
+          set -o pipefail
+          node ci/e2e-real-jira.mjs 2>&1 | tee e2e.log
 
       - name: Report
         if: always()
@@ -107,6 +111,9 @@ jobs:
           if [ -f ci-shots/results.json ]; then
             node -e 'const r=require("./ci-shots/results.json"); console.log("::notice title=e2e results::" + r.map(x=>(x.ok?"PASS ":"FAIL ")+x.name+(x.extra?" — "+x.extra:"")).join("%0A"))'
           fi
+          for f in seed.log e2e.log; do
+            if [ -f "$f" ]; then echo "::notice title=$f::$(tail -n 25 "$f" | cut -c1-300 | sed ':a;N;$!ba;s/\n/%0A/g')"; fi
+          done
           if [ -f jira.log ]; then
             echo "::notice title=jira.log tail::$(grep -E 'ERROR|FATAL|BUILD|Exception|started|RUNNING' jira.log | tail -n 25 | cut -c1-300 | sed ':a;N;$!ba;s/\n/%0A/g')"
           fi
@@ -118,6 +125,8 @@ jobs:
           path: |
             ci-shots/
             jira.log
+            seed.log
+            e2e.log
 
       - name: Publish release asset
         if: startsWith(github.ref, 'refs/tags/v')

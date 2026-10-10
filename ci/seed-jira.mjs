@@ -35,11 +35,14 @@ for (const name of ['Back-End', 'Front-End']) {
   try { await api('POST', '/rest/api/2/component', { project: KEY, name }); log('component', name); } catch (e) { log('component', name, 'skipped:', e.message.split('\n')[0]); }
 }
 
-const meta = await api('GET', `/rest/api/2/issue/createmeta?projectKeys=${KEY}`);
-const types = meta.projects[0].issuetypes;
+// Jira 9 removed GET /issue/createmeta?projectKeys=...; the project's own
+// issue types come with the project resource instead.
+const project = await api('GET', `/rest/api/2/project/${KEY}`);
+const types = project.issueTypes || [];
 log('issue types:', types.map((t) => `${t.name}${t.subtask ? '(sub)' : ''}`).join(', '));
 const storyType = types.find((t) => t.name === 'Story') || types.find((t) => !t.subtask);
 const subType = types.find((t) => t.subtask);
+if (!storyType) throw new Error('project has no non-subtask issue type');
 
 const created = [];
 const story = async (summary) => {
@@ -49,8 +52,16 @@ const story = async (summary) => {
 };
 const sub = async (parent, summary, component) => {
   if (!subType) return null;
-  const r = await api('POST', '/rest/api/2/issue', { fields: { project: { key: KEY }, issuetype: { id: subType.id }, parent: { key: parent }, summary, components: [{ name: component }] } });
-  return r.key;
+  const fields = { project: { key: KEY }, issuetype: { id: subType.id }, parent: { key: parent }, summary };
+  try {
+    return (await api('POST', '/rest/api/2/issue', { fields: { ...fields, components: [{ name: component }] } })).key;
+  } catch (e) {
+    // components not on the create screen: create plainly, then try to set it by edit
+    log('sub-task with component failed, retrying plain:', e.message.split('\n')[0]);
+    const key = (await api('POST', '/rest/api/2/issue', { fields })).key;
+    await api('PUT', `/rest/api/2/issue/${key}`, { fields: { components: [{ name: component }] } }).catch((err) => log('component edit failed:', err.message.split('\n')[0]));
+    return key;
+  }
 };
 
 const s1 = await story('US-CAT-01: finished story');
