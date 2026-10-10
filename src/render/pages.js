@@ -1,13 +1,11 @@
 import { shell } from './shell.js';
+import { toolbar } from './toolbar.js';
 import { esc } from './util.js';
 
 const errorLine = (error) => (error ? `<p class="error">${esc(error)}</p>` : '');
 
-/**
- * Login = where Jira is, who you are (token) and which project to look at —
- * all in one step. The project is optional here; without it you get a picker.
- */
-export function renderLogin({ baseUrl = '', lockedBaseUrl = null, project = '', error = '' } = {}) {
+/** Login = where Jira is and who you are. The project is picked afterwards, inside the app. */
+export function renderLogin({ baseUrl = '', lockedBaseUrl = null, error = '' } = {}) {
   const urlField = lockedBaseUrl
     ? `<div class="field"><label>آدرس Jira</label><input value="${esc(lockedBaseUrl)}" readonly dir="ltr"></div>`
     : `<div class="field"><label for="baseUrl">آدرس Jira</label>
@@ -16,7 +14,7 @@ export function renderLogin({ baseUrl = '', lockedBaseUrl = null, project = '', 
   return shell('ورود — ردیاب Jira', `
     <div class="login-wrap">
       <h1>ردیاب وضعیت پروژه Jira</h1>
-      <p>Personal Access Token جیرا رو وارد کن و بگو کدوم پروژه رو می‌خوای ببینی. توکن فقط تو حافظه‌ی همین سشن سرور می‌مونه، رو دیسک ذخیره نمی‌شه.</p>
+      <p>Personal Access Token جیرا رو وارد کن. بعد از ورود، پروژه رو از لیست بالای صفحه انتخاب می‌کنی. توکن فقط تو حافظه‌ی همین سشن سرور می‌مونه، رو دیسک ذخیره نمی‌شه.</p>
       ${errorLine(error)}
       <form method="post" action="/login">
         ${urlField}
@@ -24,32 +22,21 @@ export function renderLogin({ baseUrl = '', lockedBaseUrl = null, project = '', 
           <label for="token">Personal Access Token</label>
           <input id="token" name="token" type="password" placeholder="paste token" autocomplete="off" required autofocus>
         </div>
-        <div class="field" style="margin-top:10px;">
-          <label for="project">کلید پروژه (اختیاری — مثلاً DMA)</label>
-          <input id="project" name="project" type="text" value="${esc(project)}" placeholder="DMA" autocapitalize="characters" pattern="[A-Za-z][A-Za-z0-9_]{1,19}">
-          <span class="pick-hint">خالی بذاری، بعد از ورود از لیست پروژه‌هات انتخاب می‌کنی.</span>
-        </div>
         <button type="submit" style="margin-top:14px;width:100%;">ورود</button>
       </form>
     </div>`);
 }
 
-export function renderProjects({ projects, current = '', user = '', error = '' }) {
-  const options = projects.map((p) => `<option value="${esc(p.key)}">${esc(p.name)}</option>`).join('');
-  return shell('انتخاب پروژه — ردیاب Jira', `
-    <div class="login-wrap">
-      <h1>کدوم پروژه؟</h1>
-      <p>${user ? `سلام ${esc(user)} — ` : ''}کلید یا اسم پروژه رو بنویس و از لیست انتخاب کن (${projects.length} پروژه در دسترسته).</p>
-      ${errorLine(error)}
-      <form method="post" action="/projects">
-        <div class="field">
-          <label for="project">پروژه</label>
-          <input id="project" name="project" list="project-list" value="${esc(current)}" placeholder="DMA" autocapitalize="characters" required autofocus autocomplete="off">
-          <datalist id="project-list">${options}</datalist>
-        </div>
-        <button type="submit" style="margin-top:14px;width:100%;">نمایش گزارش</button>
-      </form>
-      <form method="post" action="/logout"><button type="submit" class="tb-link" style="width:100%;">خروج</button></form>
+/** Logged in, no project chosen yet (or the chosen one failed): just the selector. */
+export function renderHome({ projects, user = '', error = '' }) {
+  return shell('ردیاب Jira', `
+    <div class="page">
+      ${toolbar({ projects, user })}
+      <section>
+        <h2>یه پروژه انتخاب کن</h2>
+        ${errorLine(error)}
+        <p class="section-note">از لیست بالای صفحه پروژه‌ای که می‌خوای ببینی رو انتخاب کن (${projects.length} پروژه در دسترسته).</p>
+      </section>
     </div>`);
 }
 

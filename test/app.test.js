@@ -25,65 +25,82 @@ after(async () => {
   fs.rmSync(dataDir, { recursive: true, force: true });
 });
 
-const form = (data) => ({
+const formPost = (data, cookie) => ({
   method: 'POST',
   redirect: 'manual',
-  headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+  headers: { 'Content-Type': 'application/x-www-form-urlencoded', ...(cookie ? { cookie } : {}) },
   body: new URLSearchParams(data)
 });
 
-function cookieOf(res) {
-  return (res.headers.getSetCookie?.() || []).map((c) => c.split(';')[0]).join('; ');
-}
+const cookieOf = (res) => (res.headers.getSetCookie?.() || []).map((c) => c.split(';')[0]).join('; ');
 
 async function login(extra = {}) {
-  const res = await fetch(`${base}/login`, form({ baseUrl: jira.url, token: 'good-token', ...extra }));
+  const res = await fetch(`${base}/login`, formPost({ baseUrl: jira.url, token: 'good-token', ...extra }));
   return { res, cookie: cookieOf(res) };
 }
+
+const get = async (cookie, url = '/') => (await fetch(`${base}${url}`, { headers: { cookie } })).text();
 
 test('unauthenticated visitors are sent to /login', async () => {
   const res = await fetch(`${base}/`, { redirect: 'manual' });
   assert.equal(res.status, 302);
   assert.equal(res.headers.get('location'), '/login');
-  assert.match(await (await fetch(`${base}/login`)).text(), /Personal Access Token/);
+  const page = await (await fetch(`${base}/login`)).text();
+  assert.match(page, /Personal Access Token/);
+  assert.ok(!page.includes('name="project"'), 'project is chosen after login, not on the login form');
 });
 
 test('bad token is rejected on the login page, no session cookie', async () => {
-  const res = await fetch(`${base}/login`, form({ baseUrl: jira.url, token: 'wrong' }));
+  const res = await fetch(`${base}/login`, formPost({ baseUrl: jira.url, token: 'wrong' }));
   assert.equal(res.status, 400);
   assert.equal(cookieOf(res), '');
   assert.match(await res.text(), /Jira توکن رو قبول نکرد/);
 });
 
-test('invalid base URL and project key are rejected before touching Jira', async () => {
+test('invalid base URL is rejected before touching Jira', async () => {
   const before = jira.calls.length;
-  const a = await fetch(`${base}/login`, form({ baseUrl: 'ftp://nope', token: 'x' }));
-  const b = await fetch(`${base}/login`, form({ baseUrl: jira.url, token: 'good-token', project: 'bad key; DROP' }));
-  assert.equal(a.status, 400);
-  assert.equal(b.status, 400);
+  const res = await fetch(`${base}/login`, formPost({ baseUrl: 'ftp://nope', token: 'x' }));
+  assert.equal(res.status, 400);
   assert.equal(jira.calls.length, before);
 });
 
-test('login with a project goes straight to its report (DMA, US-prefix modules)', async () => {
-  const { res, cookie } = await login({ project: 'dma' });
+test('login lands on a page with a project select box and no report yet', async () => {
+  const { res, cookie } = await login();
   assert.equal(res.status, 302);
   assert.equal(res.headers.get('location'), '/');
-  assert.match((res.headers.getSetCookie()[0]), /HttpOnly/i);
+  assert.match(res.headers.getSetCookie()[0], /HttpOnly/i);
 
-  const html = await (await fetch(`${base}/`, { headers: { cookie } })).text();
+  const html = await get(cookie);
+  assert.match(html, /<select name="project"/);
+  assert.match(html, /<option value="DMA">DMA — DMA project<\/option>/);
+  assert.match(html, /<option value="ABC">ABC — ABC project<\/option>/);
+  assert.match(html, /یه پروژه انتخاب کن/);
+  assert.ok(!html.includes('ردیاب پروژه'), 'no report before a project is chosen');
+  assert.ok(!html.includes('good-token'), 'token must never reach the browser');
+});
+
+test('choosing DMA in the select shows its report, with DMA selected', async () => {
+  const { cookie } = await login();
+  const html = await get(cookie, '/?project=DMA');
   assert.match(html, /ردیاب پروژه DMA/);
+  assert.match(html, /<option value="DMA" selected>/);
   assert.match(html, /Test User/);
   assert.match(html, /آماده برای فرانت/);
   assert.match(html, /فرانت در حال انجام/);
   assert.match(html, /Sprint One/);
   assert.match(html, /Sprint Two/);
   assert.match(html, /AAA/);
-  assert.ok(!html.includes('good-token'), 'token must never reach the browser');
+});
+
+test('the choice sticks for the session: plain / keeps showing the project', async () => {
+  const { cookie } = await login();
+  await get(cookie, '/?project=DMA');
+  assert.match(await get(cookie), /ردیاب پروژه DMA/);
 });
 
 test('parallel list is scoped to the planning sprint (no active one -> next future)', async () => {
-  const { cookie } = await login({ project: 'DMA' });
-  const html = await (await fetch(`${base}/`, { headers: { cookie } })).text();
+  const { cookie } = await login();
+  const html = await get(cookie, '/?project=DMA');
   const plan = html.slice(html.indexOf('هم‌زمان صدا بزنی'));
   assert.ok(plan.includes('اسپرینت بعدی (اسپرینت فعالی نیست)'));
   assert.match(plan, /Sprint Two/);
@@ -91,57 +108,57 @@ test('parallel list is scoped to the planning sprint (no active one -> next futu
 });
 
 test('the true-completion numbers are right', async () => {
-  const { cookie } = await login({ project: 'DMA' });
-  const html = await (await fetch(`${base}/`, { headers: { cookie } })).text();
-  // 1 done, 2 in progress (DMA-2 backend-only, DMA-3 frontend running), 1 backlog -> 25% / 50% / 25%
+  const { cookie } = await login();
+  const html = await get(cookie, '/?project=DMA');
+  // 1 done, 2 in progress (DMA-2 backend-only, DMA-3 frontend running), 1 backlog
   assert.match(html, /1 از 4 استوری/);
   assert.match(html, /2 از 4 استوری/);
 });
 
-test('no project at login -> picker -> pick ABC, grouped by epic', async () => {
-  const { res, cookie } = await login();
-  assert.equal(res.headers.get('location'), '/projects');
-  const picker = await (await fetch(`${base}/projects`, { headers: { cookie } })).text();
-  assert.match(picker, /<option value="DMA">/);
-  assert.match(picker, /<option value="ABC">/);
-
-  const pick = await fetch(`${base}/projects`, { ...form({ project: 'abc' }), headers: { cookie, 'Content-Type': 'application/x-www-form-urlencoded' } });
-  assert.equal(pick.headers.get('location'), '/');
-  const html = await (await fetch(`${base}/`, { headers: { cookie } })).text();
+test('switching to ABC groups by epic and has no sprints', async () => {
+  const { cookie } = await login();
+  await get(cookie, '/?project=DMA');
+  const html = await get(cookie, '/?project=abc');
   assert.match(html, /ردیاب پروژه ABC/);
+  assert.match(html, /<option value="ABC" selected>/);
   assert.match(html, /Onboarding epic/);
   assert.match(html, /هیچ اسپرینتی برای این پروژه پیدا نشد/);
 });
 
-test('unknown project is bounced back to the picker with a message', async () => {
+test('unknown project bounces back to the select with a message', async () => {
   const { cookie } = await login();
-  const pick = await fetch(`${base}/projects`, { ...form({ project: 'ZZZ' }), headers: { cookie, 'Content-Type': 'application/x-www-form-urlencoded' } });
-  assert.match(decodeURIComponent(pick.headers.get('location')), /ZZZ.*پیدا نشد/);
+  const html = await get(cookie, '/?project=ZZZ');
+  assert.match(html, /خواندن پروژه ZZZ ممکن نشد/);
+  assert.match(html, /<select name="project"/);
+  assert.ok(!html.includes('ردیاب پروژه ZZZ'));
 });
 
-test('?project= switches project on the fly', async () => {
-  const { cookie } = await login({ project: 'DMA' });
-  const html = await (await fetch(`${base}/?project=ABC`, { headers: { cookie } })).text();
-  assert.match(html, /ردیاب پروژه ABC/);
+test('malformed project key is refused without querying Jira for it', async () => {
+  const { cookie } = await login();
+  await get(cookie);
+  const calls = jira.calls.length;
+  const html = await get(cookie, `/?project=${encodeURIComponent('A" OR 1=1')}`);
+  assert.match(html, /کلید پروژه معتبر نیست/);
+  assert.equal(jira.calls.length, calls);
 });
 
 test('history snapshot is written per Jira+project', async () => {
-  const { cookie } = await login({ project: 'DMA' });
-  await fetch(`${base}/?refresh=1`, { headers: { cookie } });
+  const { cookie } = await login();
+  await get(cookie, '/?project=DMA&refresh=1');
   const files = fs.readdirSync(path.join(dataDir, 'history'));
   assert.ok(files.some((f) => f.endsWith('__DMA.json')), files.join(','));
 });
 
 test('report is cached briefly: a plain reload does not re-query Jira', async () => {
-  const { cookie } = await login({ project: 'DMA' });
-  await fetch(`${base}/?refresh=1`, { headers: { cookie } });
+  const { cookie } = await login();
+  await get(cookie, '/?project=DMA&refresh=1');
   const calls = jira.calls.length;
-  await fetch(`${base}/`, { headers: { cookie } });
+  await get(cookie);
   assert.equal(jira.calls.length, calls);
 });
 
 test('logout destroys the session', async () => {
-  const { cookie } = await login({ project: 'DMA' });
+  const { cookie } = await login();
   const out = await fetch(`${base}/logout`, { method: 'POST', redirect: 'manual', headers: { cookie } });
   assert.equal(out.status, 302);
   const after = await fetch(`${base}/`, { redirect: 'manual', headers: { cookie } });

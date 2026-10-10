@@ -1,4 +1,5 @@
 import { shell } from './shell.js';
+import { toolbar } from './toolbar.js';
 import { buildStoryChart, buildSubtaskChart } from './charts.js';
 import { sprintSection } from './sprints.js';
 import { inProgressGroups } from './verdicts.js';
@@ -62,7 +63,7 @@ function statTile(label, color, value, sub) {
   return `<div class="stat"><div class="stat-top"><span class="stat-label">${label}</span><span class="dot" style="background:var(${color})"></span></div><div class="stat-value num" style="color:var(${color})">${Math.round(value)}%</div><div class="stat-sub num">${sub}</div></div>`;
 }
 
-export function renderReport(report, { previous = null, insights = null, dailySubtasks = null, dailyStories = null, sprints = null, user = '' } = {}) {
+export function renderReport(report, { previous = null, insights = null, dailySubtasks = null, dailyStories = null, sprints = null, user = '', projects = [] } = {}) {
   const t = report.totals;
   const d = pct(t.done, t.total), w = pct(t.inProgress, t.total), b = pct(t.backlog, t.total);
   const generated = new Date(report.generatedAt).toLocaleString('fa-IR', { dateStyle: 'medium', timeStyle: 'short' });
@@ -72,13 +73,7 @@ export function renderReport(report, { previous = null, insights = null, dailySu
 
   return shell(`ردیاب ${report.projectKey}`, `
     <div class="page">
-      <div class="toolbar">
-        <span class="who">${user ? esc(user) : ''}</span>
-        <a class="tb-link" href="/?refresh=1">تازه‌سازی</a>
-        <a class="tb-link" href="/projects">تغییر پروژه</a>
-        <button type="button" onclick="window.print()">چاپ / PDF</button>
-        <form method="post" action="/logout"><button type="submit" class="tb-link">خروج</button></form>
-      </div>
+      ${toolbar({ projects, current: report.projectKey, user, withReportActions: true })}
       <header>
         <span class="eyebrow">${key} · LIVE</span>
         <h1>ردیاب پروژه ${key}</h1>

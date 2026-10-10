@@ -123,4 +123,7 @@ button:hover{filter:brightness(1.08);}
 .toolbar form{margin:0;}
 .toolbar{align-items:center;flex-wrap:wrap;}
 .who{font-size:12px;color:var(--ink-faint);margin-inline-end:auto;}
+.proj-pick{margin:0;}
+.proj-pick select{font-family:inherit;font-size:13px;padding:7px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);max-width:320px;cursor:pointer;}
+.proj-pick select:focus{outline:2px solid var(--accent);outline-offset:1px;}
 `;

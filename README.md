@@ -18,7 +18,7 @@ npm start            # http://localhost:4173
 
 پورت رو با `PORT` عوض کن: `PORT=5000 npm start` (PowerShell: `$env:PORT=5000; npm start`).
 
-صفحه‌ی ورود سه چیز می‌خواد: آدرس Jira، توکن، و (اختیاری) کلید پروژه. کلید رو ندی، بعد از ورود از لیست پروژه‌هات انتخاب می‌کنی. هر وقت خواستی از «تغییر پروژه» یا `/?project=KEY` عوضش کن.
+صفحه‌ی ورود فقط آدرس Jira و توکن می‌خواد. بعد از ورود، بالای صفحه یه **سلکت‌باکس** با همه‌ی پروژه‌هایی که بهشون دسترسی داری هست؛ هر پروژه‌ای رو انتخاب کنی همون لحظه گزارشش باز می‌شه، و هر وقت خواستی از همون سلکت عوضش می‌کنی. انتخاب تا آخر سشن می‌مونه. لینک مستقیم هم داری: `/?project=KEY`.
 
 ### ساخت توکن
 Jira → آواتار پروفایل → **Personal Access Tokens** (`/plugins/servlet/personal-access-tokens`) → Create token.
@@ -47,7 +47,7 @@ docker run -d -p 4173:4173 -v jira-dashboard-data:/data jira-dashboard
 | `PORT` | `4173` | پورت |
 | `HOST` | `127.0.0.1` | `0.0.0.0` برای سرور/داکر |
 | `JIRA_BASE_URL` | — | اگه بذاری، اپ فقط به همین Jira وصل می‌شه و فیلد آدرس از صفحه‌ی ورود حذف می‌شه |
-| `DEFAULT_PROJECT` | — | پیش‌فرض فیلد پروژه تو صفحه‌ی ورود |
+| `DEFAULT_PROJECT` | — | پروژه‌ای که بعد از ورود خودکار باز بشه (بدون این، اول فقط سلکت‌باکس می‌بینی) |
 | `DATA_DIR` | `./data` | مسیر تاریخچه |
 | `SESSION_TTL_MINUTES` | `480` | عمر سشن بی‌فعالیت |
 | `REPORT_CACHE_SECONDS` | `30` | کش کوتاه گزارش؛ دکمه‌ی «تازه‌سازی» دورش می‌زنه |
@@ -98,7 +98,7 @@ npm test
 
 ```
 server.js              راه‌اندازی
-src/app.js             مسیرها: /login /projects / /logout
+src/app.js             مسیرها: /login / (گزارش + سلکت پروژه) /logout
 src/jiraClient.js      کلاینت REST
 src/classify.js        منطق «Done واقعی»
 src/report.js          گزارش + خلاصه + پیشنهاد اجرای موازی
